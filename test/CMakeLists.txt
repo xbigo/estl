@@ -8,8 +8,9 @@ amun_fetch_lib( catch
 
 add_executable(ape_estl_test main.cpp tiny_vector.cpp)
 target_compile_features(ape_estl_test PUBLIC cxx_std_17)
-target_include_directories(ape_estl_test PUBLIC gsl ape_config ../include
+target_include_directories(ape_estl_test PUBLIC ../include
 	"${catch_SOURCE_DIR}/single_include"
-	"${gsl_SOURCE_DIR}/include")
+	${gsl_include_dir}
+	${ape_config_include_dir})
 
 add_test(NAME run_estl_test COMMAND ape_estl_test )

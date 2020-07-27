@@ -36,6 +36,7 @@ if(${ESTL_NORMAL})
 		)
 	add_library(gsl INTERFACE IMPORTED GLOBAL)
 	target_include_directories(gsl INTERFACE "${gsl_SOURCE_DIR}/include")
+	get_target_property(gsl_include_dir gsl INTERFACE_INCLUDE_DIRECTORIES)
 
 	add_library(ape_estl INTERFACE)
 	add_library(Ape::estl ALIAS ape_estl )
