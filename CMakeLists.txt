@@ -29,6 +29,8 @@ amun_disable_build_in_source()
 
 amun_check_build(ESTL NORMAL INSTALL TEST)
 
+get_target_property(ape_config_include_dir ape_config INTERFACE_INCLUDE_DIRECTORIES)
+
 if(${ESTL_NORMAL})
 	amun_fetch_lib( gsl
 		GIT_REPOSITORY https://github.com/microsoft/GSL.git
