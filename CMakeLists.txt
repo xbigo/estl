@@ -21,7 +21,7 @@ if (NOT DEFINED APE_SUPERPROJECT)
 			GIT_REPOSITORY https://github.com/xbigo/config.git
 			#GIT_TAG
 			)
-		add_library(ape_config INTERFACE IMPORTED GLOBAL)
+		add_library(ape_config INTERFACE)
 		target_include_directories(ape_config INTERFACE "${ape_config_SOURCE_DIR}/include")
 	endif()
 endif()
@@ -36,9 +36,7 @@ if(${ESTL_NORMAL})
 		GIT_REPOSITORY https://github.com/microsoft/GSL.git
 		GIT_TAG v3.1.0
 		)
-	add_library(gsl INTERFACE IMPORTED GLOBAL)
-	target_include_directories(gsl INTERFACE "${gsl_SOURCE_DIR}/include")
-	get_target_property(gsl_include_dir gsl INTERFACE_INCLUDE_DIRECTORIES)
+	set (gsl_include_dir "${gsl_SOURCE_DIR}/include")
 
 	add_library(ape_estl INTERFACE)
 	add_library(Ape::estl ALIAS ape_estl )

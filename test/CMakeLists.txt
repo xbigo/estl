@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(ApeEstlTest LANGUAGES CXX)
 
-amun_fetch_lib( catch
+amun_fetch_lib(catch
 	GIT_REPOSITORY https://github.com/catchorg/Catch2.git
 	GIT_TAG v2.13.0 )
 

@@ -14,24 +14,16 @@
 #include <ape/estl/memory.hpp>
 
 BEGIN_APE_NAMESPACE
-struct InnerSizePolicy{
-	std::size_t m_size = 0;
 
-	constexpr std::size_t get_size() const noexcept{return m_size;};
-	constexpr void set_size(std::size_t n) noexcept{ m_size = n;}
+template<typename SizeType = std::size_t>
+struct DefaultSizePolicy{
+	SizeType m_size = 0;
+
+	constexpr std::size_t get_size() const noexcept{return std::size_t(m_size);};
+	constexpr void set_size(std::size_t n) noexcept{ m_size = SizeType(n);}
 };
 
-template<std::ptrdiff_t Offset>
-struct OuterSizePolicy{
-	constexpr std::size_t get_size() const noexcept{
-		return *reinterpret_cast<const std::size_t*>(reinterpret_cast<const char*>(this) + Offset);
-	}
-	constexpr void set_size(std::size_t n) noexcept{
-		*reinterpret_cast<std::size_t*>(reinterpret_cast<char*>(this) + Offset) = n;
-	}
-};
-
-template<typename T, std::size_t N, typename SizePolicy = InnerSizePolicy>
+template<typename T, std::size_t N, typename SizePolicy = DefaultSizePolicy<>>
 class tiny_vector : private SizePolicy
 {
 	union{ std::array<T, N> m_data; };
@@ -312,7 +304,6 @@ class tiny_vector : private SizePolicy
 	}
 };
 
-#ifndef CPP_20
 template< class T, std::size_t N, class SP1, class SP2 >
 constexpr bool operator==( const tiny_vector<T,N, SP1>& lhs, const tiny_vector<T,N,SP2>& rhs ){
 	return lhs.size() == rhs.size()
@@ -343,13 +334,6 @@ template< class T, std::size_t N, class SP1, class SP2 >
 constexpr bool operator>=( const tiny_vector<T,N,SP1>& lhs, const tiny_vector<T,N,SP2>& rhs ){
 	return !(lhs < rhs);
 }
-
-#else //CPP_20
-template< class T, std::size_t N, class SP1, class SP2 >
-constexpr std::weak_ordering operator<=>( const tiny_vector<T,N,SP1>& lhs, const tiny_vector<T,N,SP2>& rhs ){
-	//TODO:
-}
-#endif	//CPP_20
 
 END_APE_NAMESPACE
 
