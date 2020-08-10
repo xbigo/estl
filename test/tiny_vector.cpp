@@ -227,3 +227,9 @@ TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
 		}
 	}
 }
+#if CPP_STANDARD >= CPP_STD_17
+TEST_CASE( "test case for deduction guide tiny_vector", "[tiny_vector.deduction]" ) {
+	ape::tiny_vector five{1,2,3,4};
+	CHECK(five.size() == 4);
+}
+#endif

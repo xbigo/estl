@@ -3,7 +3,6 @@
 #include <algorithm> // for std::min/max
 #include <memory> // for std::addressof
 #include <array>
-#include <vector>
 #include <initializer_list>
 #ifdef CPP_20
 #include <compare>
@@ -303,6 +302,10 @@ class tiny_vector : private SizePolicy
 		SizePolicy::set_size(count);
 	}
 };
+#if CPP_STANDARD >= CPP_STD_17
+template<typename T, typename ... U> tiny_vector(T, U...) 
+	-> tiny_vector<std::enable_if_t<(std::is_same_v<T, U> && ...), T>, 1+ sizeof...(U)>;
+#endif
 
 template< class T, std::size_t N, class SP1, class SP2 >
 constexpr bool operator==( const tiny_vector<T,N, SP1>& lhs, const tiny_vector<T,N,SP2>& rhs ){

@@ -18,7 +18,7 @@ if (NOT DEFINED APE_SUPERPROJECT)
 			include(${amun_SOURCE_DIR}/lib/amun/amun.cmake)
 		endif()
 		amun_fetch_lib( ape_config
-			GIT_REPOSITORY https://github.com/xbigo/config.git
+			GIT_REPOSITORY ../config.git
 			#GIT_TAG
 			)
 		add_library(ape_config INTERFACE)
