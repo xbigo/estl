@@ -8,6 +8,9 @@ amun_fetch_lib(catch
 
 add_executable(ape_estl_test main.cpp tiny_vector.cpp)
 target_compile_features(ape_estl_test PUBLIC cxx_std_17)
+if (MSVC)
+	target_compile_options(ape_estl_test PUBLIC "/Zc:__cplusplus")
+endif()
 target_include_directories(ape_estl_test PUBLIC ../include
 	"${catch_SOURCE_DIR}/single_include"
 	${gsl_include_dir}

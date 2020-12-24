@@ -41,6 +41,9 @@ if(${ESTL_NORMAL})
 	add_library(ape_estl INTERFACE)
 	add_library(Ape::estl ALIAS ape_estl )
 	target_compile_features(ape_estl INTERFACE cxx_std_17)
+	if (MSVC)
+		target_compile_options(ape_estl INTERFACE "/Zc:__cplusplus")
+	endif()
 	target_compile_definitions(ape_estl INTERFACE
 		$<$<CXX_COMPILER_ID:MSVC>:
 		_SCL_SECURE_NO_WARNINGS

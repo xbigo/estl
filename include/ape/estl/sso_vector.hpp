@@ -19,7 +19,7 @@ BEGIN_APE_NAMESPACE
 template<typename T, std::size_t N, class Allocator = std::allocator<T>>
 class sso_vector : public Allocator
 {
-	static constexpr std::size_t uinit_ = std::size_t(-1);
+	static constexpr std::size_t uninit_ = std::size_t(-1);
 	size_t m_size = 0;
 	typedef tiny_vector<T, N> small_type;
 	typedef std::vector<T, Allocator> large_type;
@@ -28,9 +28,8 @@ class sso_vector : public Allocator
 		small_type m_small_buffer; 
 		large_type m_large_buffer;
 	};
-	constexpr bool is_broken() const noexcept{ return m_size == uninit_; }
+	constexpr bool is_broken_() const noexcept{ return m_size == uninit_; }
 	public:
-	typedef std::array<T, N> base_type;
 	typedef T value_type;
 	typedef std::size_t size_type;
 	typedef std::ptrdiff_t difference_type;
@@ -185,30 +184,30 @@ class sso_vector : public Allocator
 		return size() < N ? m_small_buffer.back() : m_large_buffer.back();
 	}
 	constexpr T* data() noexcept{ 
-		if (is_broken()) return nullptr;
+		if (is_broken_()) return nullptr;
 		return is_small() ? m_small_buffer.data() : m_large_buffer.data();
 	}
 	constexpr const T* data() const noexcept{ 
-		if (is_broken()) return nullptr;
+		if (is_broken_()) return nullptr;
 		return is_small() ? m_small_buffer.data() : m_large_buffer.data();
 	}
 	constexpr iterator begin() noexcept { 
-		return is_broken() ?  nullptr : &front();
+		return is_broken_() ?  nullptr : &front();
 	}
 	constexpr const_iterator begin() const noexcept{ 
-		return is_broken() ?  nullptr : &front();
+		return is_broken_() ?  nullptr : &front();
 	}
 	constexpr const_iterator cbegin() const noexcept{ 
-		return is_broken() ?  nullptr : &front();
+		return is_broken_() ?  nullptr : &front();
 	}
 	constexpr iterator end() noexcept { 
-		return is_broken() ?  nullptr : &front() + size();
+		return is_broken_() ?  nullptr : &front() + size();
 	}
 	constexpr const_iterator end() const noexcept{ 
-		return is_broken() ?  nullptr : &front() + size();
+		return is_broken_() ?  nullptr : &front() + size();
 	}
 	constexpr const_iterator cend() const noexcept { 
-		return is_broken() ?  nullptr : &front() + size();
+		return is_broken_() ?  nullptr : &front() + size();
 	}
 
 	constexpr reverse_iterator rbegin() noexcept{ 
@@ -242,14 +241,15 @@ class sso_vector : public Allocator
 	}
 	//Modifiler
 	constexpr void clear() noexcept{
-		if (m_size == uninit_) return;
 		if (m_size > N){
 				destruct(m_large_buffer);
 				default_construct(m_small_buffer);
-				m_size = 0;
 		}
-		else 
+		else if (m_size != uninit_)
 			m_small_buffer.clear();
+		if (m_size == uninit_)
+			default_construct(m_small_buffer);
+		m_size = 0;
 	}
 
 	constexpr iterator insert( const_iterator pos_, const T& value ){

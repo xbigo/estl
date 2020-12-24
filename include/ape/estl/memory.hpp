@@ -3,7 +3,6 @@
 #include <ape/config.hpp>
 #include <memory>   // for std::addressof
 #include <utility> // for std::forward
-#include <type_traits>
 BEGIN_APE_NAMESPACE
 
 template<typename T> inline constexpr

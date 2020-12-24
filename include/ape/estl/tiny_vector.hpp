@@ -16,17 +16,39 @@ BEGIN_APE_NAMESPACE
 
 template<typename SizeType = std::size_t>
 struct DefaultSizePolicy{
+	typedef DefaultSizePolicy<SizeType> self_type;
 	SizeType m_size = 0;
 
-	constexpr std::size_t get_size() const noexcept{return std::size_t(m_size);};
-	constexpr void set_size(std::size_t n) noexcept{ m_size = SizeType(n);}
+	constexpr static std::size_t get_size(const self_type& self) noexcept{return std::size_t(self.m_size);};
+	constexpr static void set_size(self_type& self, std::size_t n) noexcept{ self.m_size = SizeType(n);}
 };
 
+template<typename T> struct GetSizeStorage_t;
+
+template<typename SizeType> struct GetSizeStorage_t<DefaultSizePolicy<SizeType> > {
+	typedef DefaultSizePolicy<SizeType> type;
+};
+
+template<typename T>
+using GetSizeStorage = typename GetSizeStorage_t<T>::type;
+
+template<typename T> struct GetSizeAccess_t;
+template<typename SizeType> struct GetSizeAccess_t<DefaultSizePolicy<SizeType> > {
+	typedef DefaultSizePolicy<SizeType> type;
+};
+template<typename T>
+using GetSizeAccess = typename GetSizeAccess_t<T>::type;
+
+
 template<typename T, std::size_t N, typename SizePolicy = DefaultSizePolicy<>>
-class tiny_vector : private SizePolicy
+class tiny_vector : private GetSizeStorage<SizePolicy>
 {
 	union{ std::array<T, N> m_data; };
+
 	public:
+	typedef GetSizeStorage<SizePolicy> size_storage_type;
+	typedef GetSizeAccess<SizePolicy> size_access_type;
+
 	typedef std::array<T, N> base_type;
 	typedef T value_type;
 	typedef std::size_t size_type;
@@ -44,16 +66,16 @@ class tiny_vector : private SizePolicy
 	~tiny_vector() noexcept{ clear(); }
 	constexpr tiny_vector(const tiny_vector& rhs){
 		std::uninitialized_copy(rhs.begin(), rhs.end(), m_data.begin());
-		SizePolicy::set_size(rhs.size());
+		size_access_type::set_size(*this, rhs.size());
 	}
 	constexpr tiny_vector(tiny_vector&& rhs) noexcept{
 		std::uninitialized_move(rhs.begin(), rhs.end(), &*m_data.begin());
-		SizePolicy::set_size(rhs.size());
+		size_access_type::set_size(*this, rhs.size());
 	}
 	constexpr tiny_vector(std::initializer_list<T> ilist ){
 		Expects(ilist.size() <= N);
 		std::uninitialized_move(ilist.begin(), ilist.end(), m_data.begin());
-		SizePolicy::set_size(ilist.size());
+		size_access_type::set_size(*this, ilist.size());
 	}
 	constexpr tiny_vector& operator=(const tiny_vector& rhs){
 		if (&rhs != this){
@@ -61,7 +83,7 @@ class tiny_vector : private SizePolicy
 			std::copy(rhs.begin(), rhs.begin() + s, begin());
 			destruct(begin() + s, end());
 			std::uninitialized_copy(rhs.begin() + s, rhs.end(), end());
-			SizePolicy::set_size(rhs.size());
+			size_access_type::set_size(*this, rhs.size());
 		}
 		return *this;
 	}
@@ -71,7 +93,7 @@ class tiny_vector : private SizePolicy
 			std::move(rhs.begin(), rhs.begin() + s, m_data.begin());
 			destruct(begin() + s, end());
 			std::uninitialized_move(rhs.begin() + s, rhs.end(), end());
-			SizePolicy::set_size(rhs.size());
+			size_access_type::set_size(*this, rhs.size());
 		}
 		return *this;
 	}
@@ -84,13 +106,13 @@ class tiny_vector : private SizePolicy
 	constexpr tiny_vector(size_type n, const T& t = T()){
 		Expects(n <= N);
 		std::uninitialized_fill_n(m_data.begin(), n, t);
-		SizePolicy::set_size(n);
+		size_access_type::set_size(*this, n);
 
 	}
 	tiny_vector& operator=( std::initializer_list<T> ilist ){
 		Expects(ilist.size() <= N);
 		std::uninitialized_copy(ilist.begin(), ilist.end(), m_data.begin());
-		SizePolicy::set_size(ilist.size());
+		size_access_type::set_size(*this, ilist.size());
 		return *this;
 	}
 	void assign( size_type n, const T& value ){
@@ -98,7 +120,7 @@ class tiny_vector : private SizePolicy
 		auto s = std::min(size(), n);
 		std::fill_n(m_data.begin(), s, value);
 		std::uninitialized_fill_n(m_data.begin() + s, n - s, value);
-		SizePolicy::set_size(n);
+		size_access_type::set_size(*this, n);
 	}
 	template< class ForwardItr, class = std::enable_if_t<!std::is_integral<ForwardItr>::value> >
 		void assign( ForwardItr first, ForwardItr last ){
@@ -110,7 +132,7 @@ class tiny_vector : private SizePolicy
 			for(size_type i = 0; i < s; ++i)
 				*itr++ = *first++;
 			std::uninitialized_copy(first, last, itr);
-			SizePolicy::set_size(n);
+			size_access_type::set_size(*this, n);
 		}
 
 	void assign( std::initializer_list<T> ilist ){
@@ -167,14 +189,14 @@ class tiny_vector : private SizePolicy
 
 	constexpr bool full() const noexcept{ return size() == N; }
 	constexpr bool empty() const noexcept{ return size() == 0; }
-	constexpr size_type size() const noexcept{ return SizePolicy::get_size(); }
+	constexpr size_type size() const noexcept{ return size_access_type::get_size(*this); }
 	constexpr size_type max_size() const noexcept{ return N; }
 	constexpr size_type capacity() const noexcept{ return N; }
 	//Modifiler
 	constexpr void fill( const T& value ){ assign(N, value); }
 	constexpr void clear() noexcept{
 		destruct(begin(), end());
-		SizePolicy::set_size(0);
+		size_access_type::set_size(*this, 0);
 	}
 
 	constexpr iterator insert( const_iterator pos_, const T& value ){
@@ -189,7 +211,7 @@ class tiny_vector : private SizePolicy
 		}
 		emplace_construct(*pos, std::move(value));
 
-		SizePolicy::set_size(size() + 1);
+		size_access_type::set_size(*this, size() + 1);
 		return pos;
 	}
 	constexpr iterator insert( const_iterator pos_, size_type count, const T& value ){
@@ -209,7 +231,7 @@ class tiny_vector : private SizePolicy
 			std::uninitialized_move(end() - count, end(), end());
 			std::move_backward(pos, right_size - count + pos, end());
 		}
-		SizePolicy::set_size(count + size()); // adjust size, basic guarantee
+		size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 		std::fill_n(pos, std::min(count, right_size), value);
 		return pos;
 	}
@@ -229,7 +251,7 @@ class tiny_vector : private SizePolicy
 				std::uninitialized_move(end() - count, end(), end());
 				std::move_backward(pos, right_size - count + pos, end());
 			}
-			SizePolicy::set_size(count + size()); // adjust size, basic guarantee
+			size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 			std::copy(first, first + std::min(count, right_size), pos);
 			return pos;
 		}
@@ -245,7 +267,7 @@ class tiny_vector : private SizePolicy
 		}
 		emplace_construct(*pos, std::forward<Args>(args)...);
 
-		SizePolicy::set_size(size() + 1);
+		size_access_type::set_size(*this, size() + 1);
 		return pos;
 	}
 
@@ -254,7 +276,7 @@ class tiny_vector : private SizePolicy
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		std::move(pos + 1, end(), pos);
 		destruct(back());
-		SizePolicy::set_size(size() - 1);
+		size_access_type::set_size(*this, size() - 1);
 		return pos;
 	}
 	constexpr iterator erase( const_iterator first, const_iterator last ) noexcept{
@@ -265,14 +287,13 @@ class tiny_vector : private SizePolicy
 		std::move(pos2, end(), pos1);
 		destruct(pos2, end());
 
-		SizePolicy::set_size(size() - (last - first));
+		size_access_type::set_size(*this, size() - (last - first));
 		return pos1;
 	}
-
 	template< typename... Args > constexpr reference emplace_back( Args&&... args ){
 		Expects(!full());
 		emplace_construct(m_data[size()], std::forward<Args>(args)...);
-		SizePolicy::set_size(size() + 1);
+		size_access_type::set_size(*this, size() + 1);
 		return back();
 	}
 	constexpr void push_back( const T& value ){
@@ -284,7 +305,7 @@ class tiny_vector : private SizePolicy
 	constexpr void pop_back(){
 		Expects(!empty());
 		destruct(back());
-		SizePolicy::set_size(size() - 1);
+		size_access_type::set_size(*this, size() - 1);
 	}
 
 	void resize( size_type count ){
@@ -292,14 +313,14 @@ class tiny_vector : private SizePolicy
 		destruct(std::min(begin() + count, end()), end());
 		for (auto i = end(); i < begin() + count; ++i)
 			default_construct(*i);
-		SizePolicy::set_size(count);
+		size_access_type::set_size(*this, count);
 	}
 	void resize( size_type count, const value_type& value ){
 		Expects(count <= N);
 		for (auto i = begin() + count; i < end(); ++i)
 			destruct(*i);
 		std::fill(end(), std::max(end(), begin() + count), value);
-		SizePolicy::set_size(count);
+		size_access_type::set_size(*this, count);
 	}
 };
 #if CPP_STANDARD >= CPP_STD_17
