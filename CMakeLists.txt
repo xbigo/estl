@@ -38,18 +38,25 @@ if(${ESTL_NORMAL})
 		)
 	set (gsl_include_dir "${gsl_SOURCE_DIR}/include")
 
+	set(source_files memory.hpp sso_vector.hpp tiny_vector.hpp)
+	list(TRANSFORM source_files PREPEND "include/ape/estl/" )
+
 	add_library(ape_estl INTERFACE)
 	add_library(Ape::estl ALIAS ape_estl )
-	target_compile_features(ape_estl INTERFACE cxx_std_17)
-	if (MSVC)
-		target_compile_options(ape_estl INTERFACE "/Zc:__cplusplus")
-	endif()
+	amun_enable_features(ape_estl FEATURES INTERFACE cxx_std_17)
+
 	target_compile_definitions(ape_estl INTERFACE
 		$<$<CXX_COMPILER_ID:MSVC>:
 		_SCL_SECURE_NO_WARNINGS
 		_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING
 		>)
 	target_include_directories(ape_estl INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+	target_sources(ape_estl INTERFACE ${source_files})
+
+	amun_fake_project(ape_estl_ 
+		SOURCES ${source_files} src/dummy.cpp
+		INCLUDES include  ${gsl_include_dir} ${ape_config_include_dir}
+		FOLDER Libs)
 endif()
 
 if(${ESTL_INSTALL})
