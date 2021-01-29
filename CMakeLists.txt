@@ -52,7 +52,6 @@ if(${ESTL_NORMAL})
 		_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING
 		>)
 	target_include_directories(ape_estl INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-	target_sources(ape_estl INTERFACE ${source_files})
 
 	amun_fake_project(ape_estl_ 
 		SOURCES ${source_files} src/dummy.cpp
