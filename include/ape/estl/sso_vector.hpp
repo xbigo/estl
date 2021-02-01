@@ -160,27 +160,27 @@ class sso_vector : public Allocator
 		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr reference operator[]( size_type pos ) noexcept{
-		Expects(pos < size());
+		APE_Expects(pos < size());
 		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr const_reference operator[]( size_type pos ) const noexcept{
-		Expects(pos < size());
+		APE_Expects(pos < size());
 		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr reference front() noexcept{
-		Expects(!empty());
+		APE_Expects(!empty());
 		return size() < N ? m_small_buffer.front() : m_large_buffer.front();
 	}
 	constexpr const_reference front() const noexcept{
-		Expects(!empty());
+		APE_Expects(!empty());
 		return size() < N ? m_small_buffer.front() : m_large_buffer.front();
 	}
 	constexpr reference back() noexcept{
-		Expects(!empty());
+		APE_Expects(!empty());
 		return size() < N ? m_small_buffer.back() : m_large_buffer.back();
 	}
 	constexpr const_reference back() const noexcept{
-		Expects(!empty());
+		APE_Expects(!empty());
 		return size() < N ? m_small_buffer.back() : m_large_buffer.back();
 	}
 	constexpr T* data() noexcept{ 
@@ -256,7 +256,7 @@ class sso_vector : public Allocator
 		return emplace(pos_, value);
 	}
 	constexpr iterator insert( const_iterator pos_, T&& value ){
-		Expects(!full() && pos_ <= cend());
+		APE_Expects(!full() && pos_ <= cend());
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		if (pos < end()){
 			emplace_construct(*end(), std::move(back()));
@@ -268,7 +268,7 @@ class sso_vector : public Allocator
 		return pos;
 	}
 	constexpr iterator insert( const_iterator pos_, size_type count, const T& value ){
-		Expects(size() + count <= N && pos_ <= cend());
+		APE_Expects(size() + count <= N && pos_ <= cend());
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		size_type right_size = end() - pos;
 		//  From: |   |/////|
@@ -291,7 +291,7 @@ class sso_vector : public Allocator
 	template< class ForwardItr, class = std::enable_if_t<!std::is_integral<ForwardItr>::value> >
 		constexpr iterator insert( const_iterator pos_, ForwardItr first, ForwardItr last ){
 			auto count = std::distance(first, last);
-			Expects(size() + count <= N && pos_ <= cend());
+			APE_Expects(size() + count <= N && pos_ <= cend());
 			auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 			auto right_size = end() - pos;
 			if (right_size < count){
@@ -312,7 +312,7 @@ class sso_vector : public Allocator
 		return insert(pos, ilist.begin(), ilist.end());
 	}
 	template< typename... Args > constexpr iterator emplace( const_iterator pos_, Args&&... args ){
-		Expects(!full() && pos_ <= cend());
+		APE_Expects(!full() && pos_ <= cend());
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		if (pos < end()){
 			emplace_construct(*end(), std::move(back()));
@@ -325,7 +325,7 @@ class sso_vector : public Allocator
 	}
 
 	constexpr iterator erase( const_iterator pos_ ) noexcept{
-		Expects(pos_ < end() && pos_ >= begin());
+		APE_Expects(pos_ < end() && pos_ >= begin());
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		std::move(pos + 1, end(), pos);
 		destruct(back());
@@ -333,8 +333,8 @@ class sso_vector : public Allocator
 		return pos;
 	}
 	constexpr iterator erase( const_iterator first, const_iterator last ) noexcept{
-		Expects(first <= end() && first >= begin());
-		Expects(last <= end() && last >= begin());
+		APE_Expects(first <= end() && first >= begin());
+		APE_Expects(last <= end() && last >= begin());
 		auto pos1 = begin() + (first - cbegin());	// cast to iterator
 		auto pos2 = begin() + (last - cbegin());	// cast to iterator
 		std::move(pos2, end(), pos1);
@@ -345,7 +345,7 @@ class sso_vector : public Allocator
 	}
 
 	template< typename... Args > constexpr reference emplace_back( Args&&... args ){
-		Expects(!full());
+		APE_Expects(!full());
 		emplace_construct(m_data[size()], std::forward<Args>(args)...);
 		SizePolicy::set_size(size() + 1);
 		return back();
@@ -357,20 +357,20 @@ class sso_vector : public Allocator
 		emplace_back(std::move(value));
 	}
 	constexpr void pop_back(){
-		Expects(!empty());
+		APE_Expects(!empty());
 		destruct(back());
 		SizePolicy::set_size(size() - 1);
 	}
 
 	void resize( size_type count ){
-		Expects(count <= N);
+		APE_Expects(count <= N);
 		destruct(std::min(begin() + count, end()), end());
 		for (auto i = end(); i < begin() + count; ++i)
 			default_construct(*i);
 		SizePolicy::set_size(count);
 	}
 	void resize( size_type count, const value_type& value ){
-		Expects(count <= N);
+		APE_Expects(count <= N);
 		for (auto i = begin() + count; i < end(); ++i)
 			destruct(*i);
 		std::fill(end(), std::max(end(), begin() + count), value);
