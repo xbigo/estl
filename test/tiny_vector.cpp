@@ -1,6 +1,34 @@
 #include <catch2/catch.hpp>
 #include <ape/estl/tiny_vector.hpp>
 
+TEST_CASE( "test case for outer size", "[tiny_vector.outer_size]" ) {
+
+    std::size_t size = 0;
+    struct OuterSizePolicy{
+        typedef OuterSizePolicy self_type;
+
+        constexpr static auto get_size = [&size](const self_type& ) noexcept{return size;};
+        constexpr static auto set_size = [&size](self_type& , std::size_t n) noexcept{ size = n;};
+    };
+
+    ape::tiny_vector<int, 8, OuterSizePolicy> buf;
+    CHECK(size == 0);
+    CHECK(buf.size() == 0);
+    
+    WHEN("Append and remove one"){
+        buf.push_back(2);
+        THEN("Outer size increased"){
+            CHECK(buf.size() == 1);
+            CHECK(size == 1);
+        }
+        buf.pop_back();
+        THEN("Outer size decreased"){
+            CHECK(buf.size() == 0);
+            CHECK(size == 0);
+        }
+    }
+}
+
 TEST_CASE( "test case for empty tiny_vector", "[tiny_vector.empty]" ) {
     ape::tiny_vector<int, 8> empty;
     SECTION("Check default construct") {
