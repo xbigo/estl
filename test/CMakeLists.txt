@@ -8,7 +8,9 @@ amun_fetch_lib(catch
 
 amun_add_test(ape estl 
 	FEATURES cxx_std_17
-	SOURCES main.cpp tiny_vector.cpp
+	SOURCES tiny_vector.cpp sso_vector.cpp
+		backports/span.cpp
+		main.cpp
 	INCLUDES ../include "${catch_SOURCE_DIR}/single_include"  ${gsl_include_dir} ${ape_config_include_dir}
 	FOLDER unit_tests
 	)

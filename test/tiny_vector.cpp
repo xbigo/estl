@@ -1,14 +1,16 @@
 #include <catch2/catch.hpp>
 #include <ape/estl/tiny_vector.hpp>
 
-TEST_CASE( "test case for outer size", "[tiny_vector.outer_size]" ) {
 
-    std::size_t size = 0;
+
+std::size_t size = 0;
+
+TEST_CASE( "test case for outer size", "[tiny_vector.outer_size]" ) {
     struct OuterSizePolicy{
         typedef OuterSizePolicy self_type;
 
-        constexpr static auto get_size = [&size](const self_type& ) noexcept{return size;};
-        constexpr static auto set_size = [&size](self_type& , std::size_t n) noexcept{ size = n;};
+        static std::size_t get_size(const self_type& ) noexcept {return size;}
+        static void set_size(self_type& , std::size_t n) noexcept{ size = n;}
     };
 
     ape::tiny_vector<int, 8, OuterSizePolicy> buf;

@@ -8,19 +8,19 @@ project(ApeEstl
 if (NOT DEFINED APE_SUPERPROJECT)
 	find_package(Ape 0.3.0 QUIET)
 	if (NOT Ape_FOUND)
-		find_package(ApeAmun 0.2.0 QUIET)
+		find_package(ApeAmun 0.3.0 QUIET)
 		if (NOT ApeAmun_FOUND)
 			include(FetchContent)
 			FetchContent_Declare( amun
 				GIT_REPOSITORY https://github.com/xbigo/amun.git
-				GIT_TAG v0.2.0
+				GIT_TAG v0.3.0
 				)
 			FetchContent_MakeAvailable(amun)
 			include(${amun_SOURCE_DIR}/lib/amun/amun.cmake)
 		endif()
 		amun_fetch_lib( ape_config
 			GIT_REPOSITORY ../config.git
-			GIT_TAG v0.3.0
+			GIT_TAG v0.4.0
 			)
 		add_library(ape_config INTERFACE)
 		target_include_directories(ape_config INTERFACE "${ape_config_SOURCE_DIR}/include")

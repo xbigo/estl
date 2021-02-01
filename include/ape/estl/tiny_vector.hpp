@@ -23,18 +23,15 @@ struct DefaultSizePolicy{
 	constexpr static void set_size(self_type& self, std::size_t n) noexcept{ self.m_size = SizeType(n);}
 };
 
-template<typename T> struct GetSizeStorage_t;
-
-template<typename SizeType> struct GetSizeStorage_t<DefaultSizePolicy<SizeType> > {
-	typedef DefaultSizePolicy<SizeType> type;
+template<typename T> struct GetSizeStorage_t{
+	typedef T type;
 };
 
 template<typename T>
 using GetSizeStorage = typename GetSizeStorage_t<T>::type;
 
-template<typename T> struct GetSizeAccess_t;
-template<typename SizeType> struct GetSizeAccess_t<DefaultSizePolicy<SizeType> > {
-	typedef DefaultSizePolicy<SizeType> type;
+template<typename T> struct GetSizeAccess_t{
+	typedef T type;
 };
 template<typename T>
 using GetSizeAccess = typename GetSizeAccess_t<T>::type;
