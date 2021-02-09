@@ -74,12 +74,20 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		std::uninitialized_move(ilist.begin(), ilist.end(), m_data.begin());
 		size_access_type::set_size(*this, ilist.size());
 	}
+	tiny_vector& operator=( std::initializer_list<T> ilist ){
+		APE_Expects(ilist.size() <= N);
+		std::uninitialized_copy(ilist.begin(), ilist.end(), m_data.begin());
+		size_access_type::set_size(*this, ilist.size());
+		return *this;
+	}
 	constexpr tiny_vector& operator=(const tiny_vector& rhs){
 		if (&rhs != this){
 			auto s = std::min(size(), rhs.size());
 			std::copy(rhs.begin(), rhs.begin() + s, begin());
-			destruct(begin() + s, end());
-			std::uninitialized_copy(rhs.begin() + s, rhs.end(), end());
+			if (s < size())
+				destruct(begin() + s, end());
+			else
+				std::uninitialized_copy(rhs.begin() + s, rhs.end(), end());
 			size_access_type::set_size(*this, rhs.size());
 		}
 		return *this;
@@ -88,8 +96,10 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		if (&rhs != this){
 			auto s = std::min(size(), rhs.size());
 			std::move(rhs.begin(), rhs.begin() + s, m_data.begin());
-			destruct(begin() + s, end());
-			std::uninitialized_move(rhs.begin() + s, rhs.end(), end());
+			if (s < size())
+				destruct(begin() + s, end());
+			else
+				std::uninitialized_move(rhs.begin() + s, rhs.end(), end());
 			size_access_type::set_size(*this, rhs.size());
 		}
 		return *this;
@@ -104,19 +114,18 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		APE_Expects(n <= N);
 		std::uninitialized_fill_n(m_data.begin(), n, t);
 		size_access_type::set_size(*this, n);
+	}
 
-	}
-	tiny_vector& operator=( std::initializer_list<T> ilist ){
-		APE_Expects(ilist.size() <= N);
-		std::uninitialized_copy(ilist.begin(), ilist.end(), m_data.begin());
-		size_access_type::set_size(*this, ilist.size());
-		return *this;
-	}
 	void assign( size_type n, const T& value ){
 		APE_Expects(n <= N);
-		auto s = std::min(size(), n);
+		auto origin_size = size();
+		auto s = std::min(origin_size, n);
 		std::fill_n(m_data.begin(), s, value);
-		std::uninitialized_fill_n(m_data.begin() + s, n - s, value);
+		if (s < origin_size)
+			destruct(begin() + s, end());
+		else
+			std::uninitialized_fill_n(m_data.begin() + s, n - s, value);
+		
 		size_access_type::set_size(*this, n);
 	}
 	template< class ForwardItr, class = std::enable_if_t<!std::is_integral<ForwardItr>::value> >
@@ -128,7 +137,10 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 			auto itr = m_data.begin();
 			for(size_type i = 0; i < s; ++i)
 				*itr++ = *first++;
-			std::uninitialized_copy(first, last, itr);
+			if (s < size())
+				destruct(begin() + s, end());
+			else
+				std::uninitialized_copy(first, last, itr);
 			size_access_type::set_size(*this, n);
 		}
 
@@ -205,8 +217,10 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		if (pos < end()){
 			emplace_construct(*end(), std::move(back()));
 			std::move_backward(pos, end() - 1, end());
+			*pos = std::move(value);
 		}
-		emplace_construct(*pos, std::move(value));
+		else
+			emplace_construct(*pos, std::move(value));
 
 		size_access_type::set_size(*this, size() + 1);
 		return pos;
@@ -220,18 +234,21 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		//   To2: |   |xxxxx|\\\\|/////|
 		if (right_size < count){
 			std::uninitialized_fill_n(end(), count - right_size, value);
+			size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 			std::uninitialized_move(pos, end(), pos + count);
 		}
 		//   To1: |   |///xx//|
 		//   To2: |   |xx/////|
 		else if(count > 0){
 			std::uninitialized_move(end() - count, end(), end());
+			size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 			std::move_backward(pos, right_size - count + pos, end());
 		}
-		size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
+		
 		std::fill_n(pos, std::min(count, right_size), value);
 		return pos;
 	}
+
 	template< class ForwardItr, class = std::enable_if_t<!std::is_integral<ForwardItr>::value> >
 		constexpr iterator insert( const_iterator pos_, ForwardItr first, ForwardItr last ){
 			auto count = std::distance(first, last);
@@ -242,13 +259,15 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 				auto mitr = first;
 				std::advance(mitr, right_size);
 				std::uninitialized_copy(mitr, last, end());
+				size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 				std::uninitialized_move(pos, end(), pos + count);
 			}
 			else if(count > 0){
 				std::uninitialized_move(end() - count, end(), end());
+				size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
 				std::move_backward(pos, right_size - count + pos, end());
 			}
-			size_access_type::set_size(*this, count + size()); // adjust size, basic guarantee
+			
 			std::copy(first, first + std::min(count, right_size), pos);
 			return pos;
 		}
@@ -260,11 +279,14 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 		auto pos = begin() + (pos_ - cbegin());	// cast to iterator
 		if (pos < end()){
 			emplace_construct(*end(), std::move(back()));
+			size_access_type::set_size(*this, size() + 1);
 			std::move_backward(pos, end() - 1, end());
+			*pos = T{std::forward<Args>(args)...};
 		}
-		emplace_construct(*pos, std::forward<Args>(args)...);
-
-		size_access_type::set_size(*this, size() + 1);
+		else{
+			emplace_construct(*pos, std::forward<Args>(args)...);
+			size_access_type::set_size(*this, size() + 1);
+		}
 		return pos;
 	}
 
@@ -308,15 +330,16 @@ class tiny_vector : private GetSizeStorage<SizePolicy>
 	void resize( size_type count ){
 		APE_Expects(count <= N);
 		destruct(std::min(begin() + count, end()), end());
-		for (auto i = end(); i < begin() + count; ++i)
-			default_construct(*i);
+		if (count > size())
+			std::uninitialized_value_construct_n(end(), count - size());
 		size_access_type::set_size(*this, count);
 	}
 	void resize( size_type count, const value_type& value ){
 		APE_Expects(count <= N);
-		for (auto i = begin() + count; i < end(); ++i)
-			destruct(*i);
-		std::fill(end(), std::max(end(), begin() + count), value);
+		if (count < size())
+			std::destroy_n(begin() + count, size() - count);
+		else
+			std::fill(end(), begin() + count, value);
 		size_access_type::set_size(*this, count);
 	}
 };
