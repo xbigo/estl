@@ -63,6 +63,7 @@ class sso_vector : public Allocator
 		destruct(m_small_buffer);
 		default_construct(m_large_buffer);
 		m_large_buffer.swap(tmp);
+		m_storage_type = large;
 	}
 
 	public:
@@ -193,35 +194,35 @@ class sso_vector : public Allocator
 
 	constexpr reference at( size_type pos ){
 		if (pos >= size()) throw std::out_of_range ("sso_vector::at");
-		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
+		return is_small() ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr const_reference at( size_type pos ) const{
 		if (pos >= size()) throw std::out_of_range ("sso_vector::at");
-		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
+		return is_small() ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr reference operator[]( size_type pos ) noexcept{
 		APE_Expects(pos < size(), "index out of range sso_vector");
-		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
+		return is_small() ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr const_reference operator[]( size_type pos ) const noexcept{
 		APE_Expects(pos < size(), "index out of range sso_vector");
-		return size() < N ? m_small_buffer[pos] : m_large_buffer[pos];
+		return is_small() ? m_small_buffer[pos] : m_large_buffer[pos];
 	}
 	constexpr reference front() noexcept{
 		APE_Expects(!empty(), "get front from empty sso_vector");
-		return size() < N ? m_small_buffer.front() : m_large_buffer.front();
+		return is_small() ? m_small_buffer.front() : m_large_buffer.front();
 	}
 	constexpr const_reference front() const noexcept{
 		APE_Expects(!empty(), "get front from empty sso_vector");
-		return size() < N ? m_small_buffer.front() : m_large_buffer.front();
+		return is_small() ? m_small_buffer.front() : m_large_buffer.front();
 	}
 	constexpr reference back() noexcept{
 		APE_Expects(!empty(), "get back from empty sso_vector");
-		return size() < N ? m_small_buffer.back() : m_large_buffer.back();
+		return is_small() ? m_small_buffer.back() : m_large_buffer.back();
 	}
 	constexpr const_reference back() const noexcept{
 		APE_Expects(!empty(), "get back from empty sso_vector");
-		return size() < N ? m_small_buffer.back() : m_large_buffer.back();
+		return is_small() ? m_small_buffer.back() : m_large_buffer.back();
 	}
 	constexpr T* data() noexcept{ 
 		return is_small() ? m_small_buffer.data() : m_large_buffer.data();
@@ -270,9 +271,9 @@ class sso_vector : public Allocator
 	constexpr bool is_small() const noexcept{ return m_storage_type == small;}
 	constexpr size_type small_capacity() const noexcept{ return N; }
 	constexpr bool empty() const noexcept{ return size() == 0; }
-	constexpr size_type size() const noexcept{ return is_small ? m_small_buffer.size() : m_large_buffer.size(); }
+	constexpr size_type size() const noexcept{ return is_small() ? m_small_buffer.size() : m_large_buffer.size(); }
 	constexpr size_type max_size() const noexcept{ 
-		return std::allocator_traits<Allocator>::max_size();
+		return Allocator().max_size();
 	}
 	constexpr size_type capacity() const noexcept{ 
 		return is_small() ? N : m_large_buffer.capacity();
@@ -294,12 +295,13 @@ class sso_vector : public Allocator
 	}
 
 	constexpr iterator insert( const_iterator pos_, size_type count, const T& value ){
+		auto idx = (pos_ - cbegin());
 		if (is_small()){
 			if (m_small_buffer.size() + count <= N)
 				return m_small_buffer.insert(pos_, count, value);
 			expand_to_large_storage_();
 		}
-		auto pos = m_large_buffer.begin() + (pos_ - cbegin());
+		auto pos = m_large_buffer.begin() + idx;
 		auto ret = m_large_buffer.insert(pos, count, value);
 		return m_large_buffer.data() + (ret - m_large_buffer.begin());
 	}
@@ -307,14 +309,14 @@ class sso_vector : public Allocator
 	template< class ForwardItr, class = std::enable_if_t<!std::is_integral<ForwardItr>::value> >
 		constexpr iterator insert( const_iterator pos_, ForwardItr first, ForwardItr last ){
 		auto count = std::distance(first, last);
-
+		auto idx = (pos_ - cbegin());
 		if (is_small())
 		{
 			if (m_small_buffer.size() + count <= N)
 				return m_small_buffer.insert(pos_, first, last);
 			expand_to_large_storage_();
 		}
-		auto pos = m_large_buffer.begin() + (pos_ - cbegin());
+		auto pos = m_large_buffer.begin() + idx;
 		auto ret = m_large_buffer.insert(pos, first, last);
 		return m_large_buffer.data() + (ret - m_large_buffer.begin());
 	}
@@ -324,13 +326,14 @@ class sso_vector : public Allocator
 	}
 
 	template< typename... Args > constexpr iterator emplace(const_iterator pos_, Args&&... args ){
+		auto idx = (pos_ - cbegin());
 		if (is_small())
 		{
 			if (m_small_buffer.size() < N)
 				return m_small_buffer.emplace(pos_, std::move(args)...);
 			expand_to_large_storage_();
 		}
-		auto pos = m_large_buffer.begin() + (pos_ - cbegin());
+		auto pos = m_large_buffer.begin() + idx;
 		auto ret = m_large_buffer.emplace(pos, std::move(args)...);
 		return m_large_buffer.data() + (ret - m_large_buffer.begin());
 	}
@@ -355,7 +358,7 @@ class sso_vector : public Allocator
 	}
 
 	template< typename... Args > constexpr reference emplace_back( Args&&... args ){
-		return emplace(cend(), std::move(args)...);
+		return *emplace(cend(), std::move(args)...);
 	}
 	constexpr void push_back( const T& value ){
 		emplace_back(value);

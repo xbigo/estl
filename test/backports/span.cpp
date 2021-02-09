@@ -3,6 +3,6 @@
 
 TEST_CASE( "test span", "[span.default]" ) {
 
-    ape::span<int> sp;
+    ape::stl::span<int> sp;
     CHECK(sp.empty());
 }

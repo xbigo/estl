@@ -4,7 +4,7 @@
 #include <memory> // for std::addressof
 #include <array>
 #include <initializer_list>
-#ifdef CPP_20
+#if CPP_STANDARD >= CPP_STD_20
 #include <compare>
 #endif
 
