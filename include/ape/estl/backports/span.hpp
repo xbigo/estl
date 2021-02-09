@@ -6,6 +6,18 @@
 /// reference: https://github.com/microsoft/STL/blob/main/stl/inc/span
 
 #include <ape/config.hpp>
+#if CPP_STANDARD >= CPP_STD_20
+#include <span>
+BEGIN_APE_NAMESPACE
+namespace stl{
+    using std::span;
+    using std::dynamic_extent;
+    using std::as_bytes;
+    using std::as_writable_bytes;
+}
+END_APE_NAMESPACE
+#else
+
 #include <type_traits>
 #include <iterator>
 #include <array>
@@ -13,7 +25,7 @@
 #include <gsl/gsl_assert>
 
 BEGIN_APE_NAMESPACE
-
+namespace stl{
 inline constexpr std::size_t dynamic_extent = static_cast<std::size_t>(-1);
 
 template <typename T, std::size_t Ext>
@@ -305,6 +317,8 @@ template <class T, std::size_t Ext, std::enable_if_t<!std::is_const_v<T>, int> =
     return ReturnType{reinterpret_cast<std::byte*>(sp_.data()), sp_.size_bytes()};
 }
 
+} // end namespace stl
 END_APE_NAMESPACE
 
+#endif //END CPP_STANDARD >= CPP_STD_20
 #endif //end APE_ESTL_BACKPORTS_SPAN_H
