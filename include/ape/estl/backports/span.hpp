@@ -318,24 +318,23 @@ template <class T, std::size_t Ext, std::enable_if_t<!std::is_const_v<T>, int> =
 }
 
 template<typename T, size_t N>
-inline [[nodiscard]] auto as_bytes(const std::array<T, N>& buf) noexcept {
+[[nodiscard]] auto as_bytes(const std::array<T, N>& buf) noexcept {
     using ReturnType = span<const std::byte, sizeof(T) * N>;
     return ReturnType{reinterpret_cast<const std::byte*>(buf.data()), sizeof(T) * buf.size()};
 }
 template<typename T, size_t N>
-inline [[nodiscard]] auto as_writable_bytes(std::array<T, N>& buf) noexcept {
+[[nodiscard]] auto as_writable_bytes(std::array<T, N>& buf) noexcept {
     using ReturnType = span<std::byte, sizeof(T) * N>;
     return ReturnType{ reinterpret_cast<std::byte*>(buf.data()), sizeof(T) * buf.size()};
 }
 
 template <typename T, typename Rng, std::enable_if_t<detail::is_span_compatible_range<Rng, T>, int> = 0>
-inline [[nodiscard]] span<const byte> as_bytes(const Rng& buf) noexcept {
-{
+[[nodiscard]] span<const byte> as_bytes(const Rng& buf) noexcept {
     return span<const std::byte>{reinterpret_cast<const std::byte*>(buf.data()), sizeof(T) * buf.size()};
 }
 
 template <typename T, typename Rng, std::enable_if_t<detail::is_span_compatible_range<Rng, T>, int> = 0>
-inline [[nodiscard]] span<std::byte> as_writable_bytes(Rng& buf) noexcept {
+[[nodiscard]] span<std::byte> as_writable_bytes(Rng& buf) noexcept {
     return span<std::byte>{ reinterpret_cast<std::byte*>(buf.data()), sizeof(T) * buf.size()};
 }
 
