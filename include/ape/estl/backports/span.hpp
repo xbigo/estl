@@ -216,7 +216,7 @@ public:
             static_assert(
                 Count == dynamic_extent || Count <= Ext - Offset, "Count out of range in span::subspan()");
         }
-        APE_Expects(Offset <= size(), "Offset out of range in span::subspan()");  
+        APE_Expects(Offset <= size(), "Offset out of range in span::subspan()");
         APE_Expects(Count == dynamic_extent || Count <= size() - Offset,
             "Count out of range in span::subspan()")      ;
 
@@ -227,9 +227,9 @@ public:
 
     [[nodiscard]] constexpr auto subspan(const size_type Offset, const size_type Count = dynamic_extent) const noexcept
     {
-        APE_Expects(Offset <= size(), "Offset out of range in span::subspan()");  
+        APE_Expects(Offset <= size(), "Offset out of range in span::subspan()");
         APE_Expects(Count == dynamic_extent || Count <= size() - Offset,
-            "Count out of range in span::subspan()");  
+            "Count out of range in span::subspan()");
 
         using ReturnType = span<element_type, dynamic_extent>;
         return ReturnType{data_ + Offset, Count == dynamic_extent ? size() - Offset : Count};
@@ -315,6 +315,28 @@ template <class T, std::size_t Ext, std::enable_if_t<!std::is_const_v<T>, int> =
 [[nodiscard]] auto as_writable_bytes(span<T, Ext> sp_) noexcept {
     using ReturnType = span<std::byte, Ext == dynamic_extent ? dynamic_extent : sizeof(T) * Ext>;
     return ReturnType{reinterpret_cast<std::byte*>(sp_.data()), sp_.size_bytes()};
+}
+
+template<typename T, size_t N>
+inline [[nodiscard]] auto as_bytes(const std::array<T, N>& buf) noexcept {
+    using ReturnType = span<const std::byte, sizeof(T) * N>;
+    return ReturnType{reinterpret_cast<const std::byte*>(buf.data()), sizeof(T) * buf.size()};
+}
+template<typename T, size_t N>
+inline [[nodiscard]] auto as_writable_bytes(std::array<T, N>& buf) noexcept {
+    using ReturnType = span<std::byte, sizeof(T) * N>;
+    return ReturnType{ reinterpret_cast<std::byte*>(buf.data()), sizeof(T) * buf.size()};
+}
+
+template <typename T, typename Rng, std::enable_if_t<detail::is_span_compatible_range<Rng, T>, int> = 0>
+inline [[nodiscard]] span<const byte> as_bytes(const Rng& buf) noexcept {
+{
+    return span<const std::byte>{reinterpret_cast<const std::byte*>(buf.data()), sizeof(T) * buf.size()};
+}
+
+template <typename T, typename Rng, std::enable_if_t<detail::is_span_compatible_range<Rng, T>, int> = 0>
+inline [[nodiscard]] span<std::byte> as_writable_bytes(Rng& buf) noexcept {
+    return span<std::byte>{ reinterpret_cast<std::byte*>(buf.data()), sizeof(T) * buf.size()};
 }
 
 } // end namespace stl
