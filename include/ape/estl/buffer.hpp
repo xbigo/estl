@@ -7,7 +7,6 @@
 //STL
 #include <algorithm>
 #include <memory>
-#include <array>
 #include <cstddef> // std::byte
 #include <stdexcept>
 #include <gsl/gsl_assert>

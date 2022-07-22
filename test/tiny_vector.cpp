@@ -1,22 +1,12 @@
 #include <catch2/catch.hpp>
 #include <ape/estl/tiny_vector.hpp>
 
-
-
-std::size_t size = 0;
-
-TEST_CASE( "test case for outer size", "[tiny_vector.outer_size]" ) {
-    struct OuterSizePolicy{
-        typedef OuterSizePolicy self_type;
-
-        static std::size_t get_size(const self_type& ) noexcept {return size;}
-        static void set_size(self_type& , std::size_t n) noexcept{ size = n;}
-    };
-
-    ape::tiny_vector<int, 8, OuterSizePolicy> buf;
+TEST_CASE( "test case for outer size", "[array_ref_vector.outer_size]" ) {
+    std::size_t size = 0;
+    ape::array_ref_vector<int, 8, ape::separated_indirect_policy<> > buf(&size);
     CHECK(size == 0);
     CHECK(buf.size() == 0);
-    
+
     WHEN("Append and remove one"){
         buf.push_back(2);
         THEN("Outer size increased"){
@@ -31,8 +21,8 @@ TEST_CASE( "test case for outer size", "[tiny_vector.outer_size]" ) {
     }
 }
 
-TEST_CASE( "test case for empty tiny_vector", "[tiny_vector.empty]" ) {
-    ape::tiny_vector<int, 8> empty;
+TEST_CASE( "test case for empty array_ref_vector", "[array_ref_vector.empty]" ) {
+    ape::array_ref_vector<int, 8> empty;
     SECTION("Check default construct") {
         CHECK(empty.capacity() == 8);
         CHECK(empty.size() == 0);
@@ -42,8 +32,8 @@ TEST_CASE( "test case for empty tiny_vector", "[tiny_vector.empty]" ) {
         CHECK(empty.max_size() == 8);
     }
 }
-TEST_CASE( "test case for tiny_vector contains one item", "[tiny_vector.one]" ) {
-    ape::tiny_vector<int, 8> one(1);
+TEST_CASE( "test case for array_ref_vector contains one item", "[array_ref_vector.one]" ) {
+    ape::array_ref_vector<int, 8> one(1);
     SECTION("Check construct with 1 element"){
         CHECK(one.capacity() == 8);
         REQUIRE(one.size() == 1);
@@ -53,20 +43,20 @@ TEST_CASE( "test case for tiny_vector contains one item", "[tiny_vector.one]" ) 
         CHECK(!one.full());
         CHECK(one.max_size() == 8);
 
-        CHECK(one[0] == 0);
-        CHECK(one.front() == 0);
-        CHECK(one.back() == 0);
+        CHECK(one[0] == 1);
+        CHECK(one.front() == 1);
+        CHECK(one.back() == 1);
         CHECK(one.at(0) == one[0]);
     }
 }
 
-TEST_CASE( "test case for tiny_vector", "[tiny_vector.buffer]" ) {
-    ape::tiny_vector<int, 8> buf(7, 1);
+TEST_CASE( "test case for array_ref_vector", "[array_ref_vector.buffer]" ) {
+    ape::array_ref_vector<int, 8> buf({1,1,1,1,1,1,1});
 
     REQUIRE(buf.size() == 7);
     CHECK(!buf.full());
     CHECK(buf[0] ==1 );
-    CHECK(buf.back() == 1);
+    CHECK(buf.front() == 1);
     CHECK(std::count(buf.begin(), buf.end(), 1) == 7);
 
     WHEN("Check construct with 1 element"){
@@ -86,8 +76,8 @@ TEST_CASE( "test case for tiny_vector", "[tiny_vector.buffer]" ) {
     }
 }
 
-TEST_CASE("Test tiny_vector::insert", "[tiny_vector.insert]"){
-    ape::tiny_vector<int, 8> buf(4, 1);
+TEST_CASE("Test array_ref_vector::insert", "[array_ref_vector.insert]"){
+    ape::array_ref_vector<int, 8> buf(1, 1,1,1);
 
     WHEN("Insert at the begin"){
         buf.insert(buf.begin(), 2);
@@ -155,9 +145,8 @@ TEST_CASE("Test tiny_vector::insert", "[tiny_vector.insert]"){
         }
     }
 }
-
-TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
-    ape::tiny_vector<int, 8> buf = {1,1,1,1};
+TEST_CASE("Test tiny_vecctor others", "[array_ref_vector.others]"){
+    ape::array_ref_vector<int, 8> buf (1,1,1,1);
 
     WHEN("clear"){
         buf.clear();
@@ -166,36 +155,36 @@ TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
         }
     }
     WHEN("copy via copy ctor"){
-        ape::tiny_vector<int, 8> buf2(buf);
+        ape::array_ref_vector<int, 8> buf2(buf);
         THEN("Same as source"){
             CHECK(buf2 == buf);
         }
     }
 	WHEN("move via move ctor"){
-        ape::tiny_vector<int, 8> buf2(buf);
-        ape::tiny_vector<int, 8> buf3(std::move(buf2));
+        ape::array_ref_vector<int, 8> buf2(buf);
+        ape::array_ref_vector<int, 8> buf3(std::move(buf2));
         THEN("Same as source"){
             CHECK(buf3 == buf);
         }
 	}
 	WHEN("copy via operator= "){
-        ape::tiny_vector<int, 8> buf2;
+        ape::array_ref_vector<int, 8> buf2;
 		buf2 = buf;
         THEN("Same as source"){
             CHECK(buf2 == buf);
         }
 	}
 	WHEN("move via operator= "){
-        ape::tiny_vector<int, 8> buf2(buf);
-        ape::tiny_vector<int, 8> buf3;
+        ape::array_ref_vector<int, 8> buf2(buf);
+        ape::array_ref_vector<int, 8> buf3;
 		buf3 = std::move(buf2);
         THEN("Same as source"){
             CHECK(buf3 == buf);
         }
 	}
 	WHEN("swap"){
-        ape::tiny_vector<int, 8> copy(buf);
-        ape::tiny_vector<int, 8> buf3;
+        ape::array_ref_vector<int, 8> copy(buf);
+        ape::array_ref_vector<int, 8> buf3;
 		buf3.swap(buf);
         THEN("Exchanged"){
             CHECK(buf.empty());
@@ -204,14 +193,14 @@ TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
         }
 	}
 	WHEN("initializer_list operator="){
-        ape::tiny_vector<int, 8> buf2;
+        ape::array_ref_vector<int, 8> buf2;
 		buf2 = {1,1,1,1};
         THEN("Exchanged"){
 			CHECK(buf2 == buf);
         }
 	}
 	WHEN("assign n item"){
-        ape::tiny_vector<int, 8> buf2;
+        ape::array_ref_vector<int, 8> buf2;
 		buf2.assign(4, 1);
         THEN("Exchanged"){
 			CHECK(buf2 == buf);
@@ -219,14 +208,14 @@ TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
 	}
 	WHEN("assign from iterators"){
 		std::array<int, 4> src =  {{1,1,1,1}};
-        ape::tiny_vector<int, 8> buf2;
+        ape::array_ref_vector<int, 8> buf2;
 		buf2.assign(src.begin(), src.end());
         THEN("Exchanged"){
 			CHECK(buf2 == buf);
         }
 	}
 	WHEN("assign from initializer_list"){
-        ape::tiny_vector<int, 8> buf2;
+        ape::array_ref_vector<int, 8> buf2;
 		buf2.assign({1,1,1,1});
         THEN("Exchanged"){
 			CHECK(buf2 == buf);
@@ -257,9 +246,7 @@ TEST_CASE("Test tiny_vecctor others", "[tiny_vector.others]"){
 		}
 	}
 }
-#if CPP_STANDARD >= CPP_STD_17
-TEST_CASE( "test case for deduction guide tiny_vector", "[tiny_vector.deduction]" ) {
-	ape::tiny_vector five{1,2,3,4};
+TEST_CASE( "test case for deduction guide array_ref_vector", "[array_ref_vector.deduction]" ) {
+	ape::array_ref_vector<int, 8> five(1,2,3,4);
 	CHECK(five.size() == 4);
 }
-#endif

@@ -44,7 +44,7 @@ if(${ESTL_NORMAL})
 
 	add_library(ape_estl INTERFACE)
 	add_library(Ape::estl ALIAS ape_estl )
-	amun_enable_features(ape_estl FEATURES INTERFACE cxx_std_17)
+	amun_enable_features(ape_estl FEATURES INTERFACE cxx_std_20)
 
 	target_compile_definitions(ape_estl INTERFACE
 		$<$<CXX_COMPILER_ID:MSVC>:
@@ -53,10 +53,11 @@ if(${ESTL_NORMAL})
 		>)
 	target_include_directories(ape_estl INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 
-	amun_fake_project(ape_estl_ 
+	amun_fake_project(ape_estl_
 		SOURCES ${source_files} src/dummy.cpp
 		INCLUDES include  ${gsl_include_dir} ${ape_config_include_dir}
-		FOLDER Libs)
+		FOLDER Libs
+		FEATURES INTERFACE cxx_std_20)
 endif()
 
 if(${ESTL_INSTALL})
@@ -74,5 +75,3 @@ if(${ESTL_TEST})
 	amun_enable_testing()
 	add_subdirectory(test)
 endif()
-
-

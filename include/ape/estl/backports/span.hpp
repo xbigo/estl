@@ -40,7 +40,7 @@ namespace detail
 
         constexpr span_storage_() noexcept = default;
 
-        constexpr explicit span_storage_(const pointer data, size_t) noexcept : data_{data} {}
+        constexpr explicit span_storage_(pointer data, size_t) noexcept : data_{data} {}
 
         pointer data_{nullptr};
         static constexpr std::size_t size_ = Ext;

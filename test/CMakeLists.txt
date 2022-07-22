@@ -6,8 +6,8 @@ amun_fetch_lib(catch
 	GIT_REPOSITORY ../Catch2.git
 	GIT_TAG v2.13.0 )
 
-amun_add_test(ape estl 
-	FEATURES cxx_std_17
+amun_add_test(ape estl
+	FEATURES cxx_std_20
 	SOURCES tiny_vector.cpp sso_vector.cpp
 		backports/span.cpp
 		main.cpp

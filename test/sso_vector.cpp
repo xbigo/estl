@@ -31,6 +31,7 @@ TEST_CASE( "test case for sso_vector contains one item", "[sso_vector.one]" ) {
 
 TEST_CASE( "test case for sso_vector", "[sso_vector.buffer]" ) {
     ape::sso_vector<int, 8> buf(7, 1);
+    buf.assign(7,1);
 
     REQUIRE(buf.size() == 7);
     CHECK(buf.is_small());
@@ -54,6 +55,7 @@ TEST_CASE( "test case for sso_vector", "[sso_vector.buffer]" ) {
 
 TEST_CASE("Test sso_vector::insert", "[sso_vector.insert]"){
     ape::sso_vector<int, 8> buf(4, 1);
+    buf.assign(4,1);
 
     WHEN("Insert at the begin"){
         buf.insert(buf.begin(), 2);
