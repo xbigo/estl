@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <ape/estl/buffer.hpp>
 
 TEST_CASE( "test case for empty sso_vector", "[sso_vector.empty]" ) {

@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <ape/estl/tiny_vector.hpp>
 
 TEST_CASE( "test case for outer size", "[array_ref_vector.outer_size]" ) {
@@ -249,4 +249,14 @@ TEST_CASE("Test tiny_vecctor others", "[array_ref_vector.others]"){
 TEST_CASE( "test case for deduction guide array_ref_vector", "[array_ref_vector.deduction]" ) {
 	ape::array_ref_vector<int, 8> five(1,2,3,4);
 	CHECK(five.size() == 4);
+}
+TEST_CASE("test case for ref_vector benchmark", "[array_ref_vector.benchmark]")
+{
+     BENCHMARK("Fibonacci 20") {
+
+         ape::array_ref_vector<int, 8> buf;
+         for(int i=0; i < 8; ++i)
+            buf.push_back(8);
+         return buf;
+    };
 }
