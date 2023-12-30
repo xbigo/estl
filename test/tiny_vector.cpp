@@ -250,7 +250,7 @@ TEST_CASE( "test case for deduction guide array_ref_vector", "[array_ref_vector.
 	ape::array_ref_vector<int, 8> five(1,2,3,4);
 	CHECK(five.size() == 4);
 }
-TEST_CASE("test case for ref_vector benchmark", "[array_ref_vector.benchmark]")
+TEST_CASE("test case for ref_vector benchmark", "[!benchmark][array_ref_vector.benchmark]")
 {
      BENCHMARK("Fibonacci 20") {
 

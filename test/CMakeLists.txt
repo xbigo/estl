@@ -13,6 +13,6 @@ amun_add_test(ape estl
 		backports/span.cpp
 		main.cpp
 	INCLUDES ../include "${catch_SOURCE_DIR}/single_include"  ${gsl_include_dir} ${ape_config_include_dir}
-	LINKS Catch2::Catch2 Catch2::Catch2WithMain
+	LINKS Catch2::Catch2
 	FOLDER unit_tests
 	)
