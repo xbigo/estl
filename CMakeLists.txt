@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(ApeEstl
-	VERSION "0.3.0"
+	VERSION "0.4.1"
 	DESCRIPTION "Generic data structure and algorithm, follow the STL style "
 	LANGUAGES CXX)
 
@@ -13,14 +13,14 @@ if (NOT DEFINED APE_SUPERPROJECT)
 			include(FetchContent)
 			FetchContent_Declare( amun
 				GIT_REPOSITORY https://github.com/xbigo/amun.git
-				GIT_TAG v0.3.0
+				GIT_TAG v0.4.1
 				)
 			FetchContent_MakeAvailable(amun)
 			include(${amun_SOURCE_DIR}/lib/amun/amun.cmake)
 		endif()
 		amun_fetch_lib( ape_config
 			GIT_REPOSITORY ../config.git
-			GIT_TAG v0.4.0
+			GIT_TAG v0.4.1
 			)
 		add_library(ape_config INTERFACE)
 		target_include_directories(ape_config INTERFACE "${ape_config_SOURCE_DIR}/include")
