@@ -1,3 +1,4 @@
+#pragma once
 #ifndef APE_ESTL_BASIC_REF_VECTOR_H
 #define APE_ESTL_BASIC_REF_VECTOR_H
 #include <concepts>
@@ -160,8 +161,8 @@ namespace detail_{
 
         using SizePolicy::get_size;
         using SizePolicy::set_size;
-        using SizePolicy::size_type;
-        using SizePolicy::size_store_type;
+        using typename SizePolicy::size_type;
+        using typename SizePolicy::size_store_type;
 
         constexpr SizePolicy &get_sizer_() noexcept { return *this; }
         constexpr const SizePolicy &get_sizer_() const noexcept { return *this; }

@@ -42,7 +42,7 @@ if(${ESTL_NORMAL})
 	set(source_files memory.hpp sso_vector.hpp tiny_vector.hpp)
 	list(TRANSFORM source_files PREPEND "include/ape/estl/" )
 
-	add_library(ape_estl INTERFACE)
+	add_library(ape_estl INTERFACE )
 	add_library(Ape::estl ALIAS ape_estl )
 	amun_enable_features(ape_estl FEATURES INTERFACE cxx_std_20)
 
@@ -53,9 +53,10 @@ if(${ESTL_NORMAL})
 		>)
 	target_include_directories(ape_estl INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
 
-	amun_fake_project(ape_estl_
-		SOURCES ${source_files} src/dummy.cpp
-		INCLUDES include  ${gsl_include_dir} ${ape_config_include_dir}
+	amun_reorg_project(ape_estl
+		SOURCES ${source_files}
+    PRIVATE_SOURCES src/dummy.cpp
+		INCLUDES ../include  ${gsl_include_dir} ${ape_config_include_dir}
 		FOLDER Libs
 		FEATURES INTERFACE cxx_std_20)
 endif()
