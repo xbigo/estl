@@ -55,8 +55,8 @@ if(${ESTL_NORMAL})
 
 	amun_reorg_project(ape_estl
 		SOURCES ${source_files}
-        PRIVATE_SOURCES src/dummy.cpp
-		INCLUDES include  ${gsl_include_dir} ${ape_config_include_dir}
+    PRIVATE_SOURCES src/dummy.cpp
+		INCLUDES ../include  ${gsl_include_dir} ${ape_config_include_dir}
 		FOLDER Libs
 		FEATURES INTERFACE cxx_std_20)
 endif()
