@@ -5,7 +5,15 @@
 #include <ape/estl/concepts.hpp>
 #include <gsl/gsl_assert>
 
+#include <cstdint>
+
 BEGIN_APE_NAMESPACE
+using long_size_t = std::uint64_t;
+using long_offset_t = std::int64_t;
+
+struct long_offset_range{
+    long_offset_t begin{0}, end{0};
+};
 
 template<typename T> 
 class not_own{

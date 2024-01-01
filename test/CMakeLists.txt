@@ -13,6 +13,7 @@ amun_add_test(ape estl
 		backports/span.cpp
 		exception.cpp
 		error_code.cpp
+		io.cpp
 		main.cpp
 	INCLUDES ../include "${catch_SOURCE_DIR}/single_include"  ${gsl_include_dir} ${ape_config_include_dir}
 	LINKS Catch2::Catch2
