@@ -32,6 +32,16 @@ concept writable_contiguous_iterator = std::contiguous_iterator<T> && detail::in
 
 template<typename U, typename T>
 concept exclude_type = !std::same_as<T, std::remove_cvref_t<U>>;
+
+template<typename From, typename To> 
+concept ptr_convertible_to  = std::convertible_to<From*, To*>;
+
+template<typename To, typename From> 
+concept ptr_convertible_from  = std::convertible_to<From*, To*>;
+
+template<typename E>
+concept enum_type = std::is_enum_v<E>;
+
 END_APE_NAMESPACE
 
 #endif // end APE_ESTL_CONCEPTS_H

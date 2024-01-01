@@ -2,28 +2,17 @@
 #ifndef APE_ESTL_UTILITY_H
 #define APE_ESTL_UTILITY_H
 #include <ape/config.hpp>
-#include <concepts>
+#include <ape/estl/concepts.hpp>
 #include <gsl/gsl_assert>
 
 BEGIN_APE_NAMESPACE
-
-template<typename From, typename To> 
-concept ptr_convertible_to  = std::convertible_to<From*, To*>;
-
-template<typename To, typename From> 
-concept ptr_convertible_from  = std::convertible_to<From*, To*>;
 
 template<typename T> 
 class not_own{
     T* ptr{nullptr};
 public:
     constexpr not_own() noexcept = default;
-#if 0
-    constexpr not_own(const not_own&) noexcept = default;
-    constexpr not_own(not_own&&) noexcept = default;
-    constexpr not_own& operator=(const not_own&) noexcept = default;
-    constexpr not_own& operator=(not_own&&) noexcept = default;
-#endif
+
     constexpr not_own(std::nullptr_t) noexcept {};
 
     template<ptr_convertible_to<T> U>
@@ -54,13 +43,11 @@ public:
 
 
     constexpr T* get() const noexcept {
-        APE_Expects(ptr);
         return ptr;
     }
     
     template<ptr_convertible_from<T> U>
     constexpr U* get() const noexcept {
-        APE_Expects(ptr);
         return get();
     }
 
