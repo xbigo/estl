@@ -29,7 +29,7 @@ inline bool has_error(error_code_ptr ec) noexcept
 }
 
 template <typename ExceptionType, enum_type E>
-inline void set_or_throw_error(error_code_ptr ec, E e)
+inline void set_error_or_throw(error_code_ptr ec, E e)
 {
     if (ec)
     {
@@ -40,7 +40,7 @@ inline void set_or_throw_error(error_code_ptr ec, E e)
 }
 
 template <typename ExceptionType>
-inline void set_or_throw_error(error_code_ptr ec, error_code e)
+inline void set_error_or_throw(error_code_ptr ec, error_code e)
 {
     if (ec)
     {

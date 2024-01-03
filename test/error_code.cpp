@@ -15,7 +15,7 @@ TEST_CASE( "test case for error_code", "[error_code]" ) {
     ape::error_code_ptr error_ptr {&some_error};
     REQUIRE(!has_error(error_ptr));
 
-    ape::set_or_throw_error<std::system_error>(error_ptr, std::errc::bad_message);
+    ape::set_error_or_throw<std::system_error>(error_ptr, std::errc::bad_message);
     REQUIRE(has_error(error_ptr));
 
     clear_error(error_ptr);
@@ -23,14 +23,14 @@ TEST_CASE( "test case for error_code", "[error_code]" ) {
     
     bool was_caught{false};
     try{
-        ape::set_or_throw_error<test_exception>(null_error, std::errc::bad_message);
+        ape::set_error_or_throw<test_exception>(null_error, std::errc::bad_message);
     }
     catch(ape::error_exception&){
         was_caught = true;
     }
     REQUIRE(was_caught);
     
-    ape::set_or_throw_error<std::system_error>(ape::not_own(&some_error), std::errc::bad_message);
+    ape::set_error_or_throw<std::system_error>(ape::not_own(&some_error), std::errc::bad_message);
     ape::error_code another_error;
     transfer_error<test_exception>(ape::error_code_ptr(&another_error), some_error, "message");
     REQUIRE(another_error == some_error);

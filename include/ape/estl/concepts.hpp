@@ -42,6 +42,17 @@ concept ptr_convertible_from  = std::convertible_to<From*, To*>;
 template<typename E>
 concept enum_type = std::is_enum_v<E>;
 
+template<typename T>
+concept has_member_size = requires(const T& t) {
+    {std::size(t)} -> std::convertible_to<std::size_t>;
+};
+
+template<typename T, typename U>
+concept permissive_same_as = 
+    std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
+
+
+
 END_APE_NAMESPACE
 
 #endif // end APE_ESTL_CONCEPTS_H

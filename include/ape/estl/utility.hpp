@@ -89,6 +89,8 @@ inline constexpr decltype(auto) operator<=>(not_own<T> lhs, not_own<U> rhs) noex
     return lhs.get() <=> rhs.get();
 }
 
+template<typename ... Args>
+void unused(Args&&... ){}
 
 END_APE_NAMESPACE
 
