@@ -25,7 +25,7 @@ namespace io
     {
     public:
         constexpr mutable_buffer address() const noexcept { return m_data; }
-        constexpr buffer_wr_view() noexcept= default;
+        constexpr buffer_wr_view() noexcept = default;
         constexpr explicit buffer_wr_view(mutable_buffer data) noexcept : m_data(data) {}
 
     private:
@@ -43,7 +43,7 @@ namespace io
         {
             rep.pos()
         } -> std::convertible_to<long_size_t>;
-    } && requires(std::remove_cvref_t<Represent> &rep, std::size_t p){
+    } && requires(std::remove_cvref_t<Represent> &rep, std::size_t p) {
         rep.pos(p);
     };
 
@@ -58,8 +58,7 @@ namespace io
         {
             rep.pos
         } -> std::convertible_to<long_size_t>;
-        
-    } && requires(std::remove_cvref_t<Represent> &rep, std::size_t p){
+    } && requires(std::remove_cvref_t<Represent> &rep, std::size_t p) {
         rep.pos = p;
     };
 
@@ -91,33 +90,33 @@ namespace io
         };
 
     template <read_represent_func Rep>
-    decltype(auto) get_data_part(Rep&& rep) noexcept
+    decltype(auto) get_data_part(Rep &&rep) noexcept
     {
         return rep.data();
     }
     template <read_represent_data Rep>
-    auto&& get_data_part(Rep&&rep) noexcept
+    auto &&get_data_part(Rep &&rep) noexcept
     {
         return rep.data;
     }
     template <read_represent_func Rep>
-    auto&& get_pos_part(Rep&& rep) noexcept
+    auto &&get_pos_part(Rep &&rep) noexcept
     {
         return rep.pos();
     }
     template <read_represent_data Rep>
-    auto&& get_pos_part(Rep &&rep) noexcept
+    auto &&get_pos_part(Rep &&rep) noexcept
     {
         return rep.pos;
     }
 
     template <read_represent_func Rep>
-    auto&& set_pos_part(Rep &rep, std::size_t p) noexcept
+    auto &&set_pos_part(Rep &rep, std::size_t p) noexcept
     {
         return rep.pos(p);
     }
     template <read_represent_data Rep>
-    auto&& set_pos_part(Rep &rep, std::size_t p) noexcept
+    auto &&set_pos_part(Rep &rep, std::size_t p) noexcept
     {
         return rep.pos = p;
     }
@@ -133,10 +132,12 @@ namespace io
         template <typename Represent>
         std::size_t get_size(const Represent &rep) noexcept
         {
-            if constexpr (has_member_size<Represent>){
+            if constexpr (has_member_size<Represent>)
+            {
                 return get_data_part(rep).size();
             }
-            else{
+            else
+            {
                 return get_data_part(rep).end() - get_data_part(rep).begin();
             }
         }
@@ -202,7 +203,7 @@ namespace io
         }
 
         template <read_represent Represent>
-        buffer_rd_view view_rd(const Represent &rep, long_offset_range h, error_code_ptr ec = {}) noexcept
+        buffer_rd_view view_rd(const Represent &rep, long_offset_range h, error_code_ptr ec = {})
         { // read_map
             APE_Expects(is_valid_range(h));
 
@@ -254,7 +255,7 @@ namespace io
         }
 
         template <write_represent Represent>
-        const_buffer write(Represent &rep, const_buffer buf, error_code_ptr err) noexcept
+        const_buffer write(Represent &rep, const_buffer buf, error_code_ptr err)
         { // write
             auto new_pos = get_pos_part(rep) + buf.size();
             if (get_size(rep) < new_pos)
@@ -273,7 +274,7 @@ namespace io
         }
 
         template <write_represent Represent>
-        buffer_wr_view view_wr(Represent &rep, long_offset_range h, error_code_ptr err = {}) noexcept
+        buffer_wr_view view_wr(Represent &rep, long_offset_range h, error_code_ptr err = {})
         { // write_map
             APE_Expects(is_valid_range(h));
 
@@ -367,7 +368,7 @@ namespace io
             return impl::read(this->m_rep, buf, ec);
         }
 
-        buffer_rd_view view_rd(long_offset_range h, error_code_ptr ec = {}) const
+        buffer_rd_view view_rd(long_offset_range h, error_code_ptr ec = {})
         { // read_map
             return impl::view_rd(this->m_rep, h, ec);
         }
@@ -396,6 +397,142 @@ namespace io
         Represent m_rep;
     };
 
+    struct pseudo_common
+    {
+        long_size_t offset(error_code_ptr ec = {}) const noexcept
+        { // sequence
+            clear_error(ec);
+            return m_pos;
+        }
+
+        bool is_eof(error_code_ptr ec = {}) const noexcept
+        { // is_eofer
+            clear_error(ec);
+            return false;
+        }
+
+        long_size_t seek(long_size_t offset, error_code_ptr ec = {})
+        { // random
+            clear_error(ec);
+            return m_pos = offset;
+        }
+
+        long_size_t size(error_code_ptr ec = {}) const noexcept
+        { // sizer
+            clear_error(ec);
+            return unknown_size;
+        }
+
+    protected:
+        long_size_t m_pos = 0;
+    };
+
+    class zero : public pseudo_common
+    {
+    public:
+        mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
+        { // reader
+            clear_error(ec);
+            std::fill(buf.begin(), buf.end(), std::byte{});
+            return buf;
+        }
+    };
+
+    class fill : public pseudo_common
+    {
+        const_buffer m_pattern;
+
+    public:
+        explicit fill(const_buffer pattern) : m_pattern(pattern)
+        {
+            APE_Expects(!pattern.empty());
+        }
+
+        mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
+        {
+            clear_error(ec);
+
+            auto tail_n = m_pos % m_pattern.size();
+            auto ditr = std::copy_n(m_pattern.end() - tail_n, tail_n, buf.begin());
+
+            auto pattern_n = (buf.size() - tail_n) / m_pattern.size();
+            for (; pattern_n > 0; --pattern_n)
+                ditr = std::copy(m_pattern.begin(), m_pattern.end(), ditr);
+
+            auto head_n = (buf.size() - tail_n) % m_pattern.size();
+            ditr = std::copy_n(m_pattern.begin(), head_n, ditr);
+
+            m_pos += buf.size();
+            return buf;
+        }
+    };
+
+    struct null
+    {
+        const_buffer write(const_buffer r, error_code_ptr ec = {})
+        {
+            clear_error(ec);
+            m_pos += r.size();
+            return {r.end(), r.end()};
+        }
+
+        void sync(error_code_ptr ec = {}) { clear_error(ec); }
+
+        long_size_t truncate(long_size_t size, error_code_ptr ec = {})
+        {
+            clear_error(ec);
+            return m_pos = size;
+        }
+
+        long_size_t offset(error_code_ptr ec = {}) const
+        { // sequence
+            clear_error(ec);
+            return m_pos;
+        }
+
+        long_size_t seek(long_size_t offset, error_code_ptr ec = {})
+        { // random
+            clear_error(ec);
+            return m_pos = offset;
+        }
+
+        long_size_t size(error_code_ptr ec = {}) const
+        { // sizer
+            clear_error(ec);
+            return 0;
+        }
+
+    private:
+        long_size_t m_pos = 0;
+    };
+
+    struct empty
+    {
+
+        mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
+        {
+            clear_error(ec);
+            return {buf.begin(), buf.begin()};
+        }
+
+        long_size_t offset(error_code_ptr ec = {}) const
+        { // sequence
+            clear_error(ec);
+            return 0;
+        }
+
+        long_size_t seek(long_size_t /*offset*/, error_code_ptr ec = {})
+        { // random
+            clear_error(ec);
+            return 0;
+        }
+
+        long_size_t size(error_code_ptr ec = {}) const
+        { // sizer
+            clear_error(ec);
+            return 0;
+        }
+    };
 }
 
 END_APE_NAMESPACE
