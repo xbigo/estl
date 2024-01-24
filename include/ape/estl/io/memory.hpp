@@ -2,7 +2,6 @@
 #ifndef APE_ESTL_IO_MEMORY_H
 #define APE_ESTL_IO_MEMORY_H
 #include <ape/estl/io/iocore.hpp>
-#include <ape/estl/byte.hpp>
 #include <type_traits>
 #include <algorithm>
 #include <vector>

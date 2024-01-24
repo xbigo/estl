@@ -13,6 +13,7 @@ using long_offset_t = std::int64_t;
 
 struct long_offset_range{
     long_offset_t begin{0}, end{0};
+    
 };
 
 template<typename T> 
