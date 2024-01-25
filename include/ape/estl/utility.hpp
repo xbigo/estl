@@ -13,10 +13,38 @@ using long_offset_t = std::int64_t;
 
 struct long_offset_range{
     long_offset_t begin{0}, end{0};
-    
 };
+inline constexpr long_size_t size(long_offset_range h) noexcept
+{
+    APE_Expects(h.begin <= h.end);
+    return long_size_t(h.end - h.begin);
+}
 
-template<typename T> 
+inline constexpr bool in_size_t_range(long_size_t n) noexcept
+{
+    return (n & ~long_size_t(std::numeric_limits<std::size_t>::max())) == 0;
+}
+inline constexpr bool in_size_t_range(long_offset_t n) noexcept
+{
+    return in_size_t_range(long_size_t(n));
+}
+inline constexpr bool in_ptrdiff_range(long_offset_t n) noexcept
+{
+    std::ptrdiff_t v(static_cast<ptrdiff_t>(n));
+    return v == n;
+}
+inline constexpr std::size_t narrow_cast(long_size_t n) noexcept
+{
+    APE_Expects(in_size_t_range(n));
+    return std::size_t(n);
+}
+inline constexpr std::ptrdiff_t narrow_cast(long_offset_t n) noexcept
+{
+    APE_Expects(in_ptrdiff_range(n));
+    return std::ptrdiff_t(n);
+}
+
+template<typename T>
 class not_own{
     T* ptr{nullptr};
 public:
@@ -54,7 +82,7 @@ public:
     constexpr T* get() const noexcept {
         return ptr;
     }
-    
+
     template<ptr_convertible_from<T> U>
     constexpr U* get() const noexcept {
         return get();

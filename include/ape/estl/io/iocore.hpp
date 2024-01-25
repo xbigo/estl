@@ -6,6 +6,7 @@
 #include <ape/estl/error_code.hpp>
 #include <any>
 #include <cstddef>
+#include <limits>
 
 BEGIN_APE_NAMESPACE
 namespace io
@@ -14,44 +15,17 @@ namespace io
     using mutable_buffer = std::span<std::byte>;
     using const_buffer = std::span<const std::byte>;
 
-    inline constexpr long_size_t unknown_size = long_size_t(-1);
-
+    inline constexpr long_offset_t unknown_offset = std::numeric_limits<long_offset_t>::max();
+    inline constexpr long_size_t unknown_size = long_size_t(unknown_offset);
 
     inline constexpr bool is_valid_range(long_offset_range h) noexcept
     {
-        return (h.begin >= 0) && (h.end == unknown_size || (h.end >= 0 && h.begin <= h.end));
+        return (h.begin >= 0) && (h.end == unknown_offset || (h.end >= 0 && h.begin <= h.end));
     }
     inline constexpr bool is_valid_range(long_offset_range h, long_size_t fsize) noexcept
     {
-        return is_valid_range(h) && (h.end == unknown_size || (long_size_t(h.end) <= fsize));
+        return is_valid_range(h) && (h.end == unknown_offset || (long_size_t(h.end) <= fsize));
     }
-
-    inline constexpr long_size_t size(long_offset_range h) noexcept
-    {
-        APE_Expects(h.begin <= h.end);
-        return long_size_t(h.end - h.begin);
-    }
-
-    inline constexpr bool in_size_t_range(long_size_t n) noexcept
-    {
-        return (n & ~long_size_t(size_t(-1))) == 0;
-    }
-    inline constexpr bool in_ptrdiff_range(long_offset_t n) noexcept
-    {
-        std::ptrdiff_t v(static_cast<ptrdiff_t>(n));
-        return v == n;
-    }
-    inline constexpr std::size_t narrow_cast(long_size_t n) noexcept
-    {
-        APE_Expects(in_size_t_range(n));
-        return std::size_t(n);
-    }
-    inline constexpr std::ptrdiff_t narrow_cast(long_offset_t n) noexcept
-    {
-        APE_Expects(in_ptrdiff_range(n));
-        return std::ptrdiff_t(n);
-    }
-
 
     // Interface List:
     // [ sequence, forward, random ]

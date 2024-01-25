@@ -7,51 +7,53 @@
 BEGIN_APE_NAMESPACE
 namespace io
 {
+    template<typename MultiplexDevice>
+    struct offset_tracker
+    {
+        MultiplexDevice *self;
+        offset_tracker(MultiplexDevice *me) : self(me)
+        {
+            seek(self->m_device, self->pos);
+        }
+        ~offset_tracker()
+        {
+            self->pos = offset(self->m_device);
+        }
+    };
+
     template <random Device>
     class multiplex_device
     {
         Device &m_device;
         long_size_t pos{0};
-
-        struct offset_tracker{
-            multiplex_device* self;
-            offset_tracker(multiplex_device* me) : self(me){
-                seek(self->m_device, pos);
-            }
-            ~offset_tracker(){
-                self->pos = offset(self->d);
-            }
-        };
-        friend struct offset_tracker;
+        friend struct offset_tracker<multiplex_device<Device>>;
     public:
-        
-
-        multiplex_device(Device &d, long_size_t p = 0) 
+        multiplex_device(Device &d, long_size_t p = 0)
         : m_device(d), pos(p)
         {
         }
 
         long_size_t offset(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             clear_error(ec);
             return pos;
         }
 
         bool is_eof(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             offset_tracker tracker{this};
             return is_eof(m_device, ec);
         }
 
         long_size_t seek(long_size_t offset, error_code_ptr ec = {})
-        { 
+        {
             offset_tracker tracker{this};
-            
+
             return seek(m_device, offset, ec);
         }
 
         long_size_t size(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             return size(m_device, ec);
         }
 
@@ -65,27 +67,27 @@ namespace io
         }
 
         mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
-        {   
+        {
             offset_tracker tracker{this};
-            
+
             return read(m_device, buf, ec);
         }
 
         auto view_rd(long_offset_range h, error_code_ptr ec = {})
-        { 
+        {
             return view_rd(m_device, h, ec);
         }
 
         const_buffer write(const_buffer buf, error_code_ptr ec = {})
         {
             offset_tracker tracker{this};
-            
+
             return write(m_device, buf, ec);
         }
 
         auto view_wr(long_offset_range h, error_code_ptr ec = {})
-        { 
-            return view_wr(m_rep, h, ec);
+        {
+            return view_wr(m_device, h, ec);
         }
 
         void sync(error_code_ptr err = {})
@@ -96,7 +98,7 @@ namespace io
         long_size_t truncate(long_size_t size, error_code_ptr err = {})
         {
             offset_tracker tracker{this};
-            
+
             return truncate(m_device, size, err);
         }
     };
@@ -108,13 +110,13 @@ namespace io
         long_size_t m_shift{0};
 
     public:
-        
+
         shift_device(Device &d, long_size_t p = 0) : m_device(d), m_shift(p)
         {
         }
 
         long_size_t offset(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             clear_error(ec);
             auto off = offset(m_device, ec);
             return off < m_shift ? 0 : (off - m_shift);
@@ -126,12 +128,12 @@ namespace io
         }
 
         long_size_t seek(long_size_t offset, error_code_ptr ec = {})
-        {   
+        {
             seek(m_device, offset + m_shift, ec) - m_shift;
         }
 
         long_size_t size(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             auto s = size(m_device, ec);
             return s < m_shift ? 0 : (s - m_shift);
         }
@@ -150,27 +152,28 @@ namespace io
         }
 
         mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
-        {   
+        {
             if (offset(m_device, ec) < m_shift)
                 seek_forward(m_device, m_shift, ec);
             return read(m_device, buf, ec);
         }
 
         auto view_rd(long_offset_range h, error_code_ptr ec = {})
-        { 
+        {
             return view_rd(m_device, {h.begin + m_shift, h.end + m_shift}, ec);
         }
 
         const_buffer write(const_buffer buf, error_code_ptr ec = {})
         {
             if (offset(m_device, ec) < m_shift)
-                seek_forward(m_device, m_shift, ec);            
+                seek_forward(m_device, m_shift, ec);
             return write(m_device, buf, ec);
         }
 
         auto view_wr(long_offset_range h, error_code_ptr ec = {})
-        { 
-            return view_wr(m_rep, {h.begin + m_shift, h.end + m_shift}, ec);
+        {
+            long_offset_range shift_h{h.begin + m_shift, h.end + m_shift};
+            return view_wr(m_device, shift_h, ec);
         }
 
         void sync(error_code_ptr err = {})
@@ -191,13 +194,13 @@ namespace io
         long_offset_range m_section{};
 
     public:
-        sub_device(Device &d, long_offset_range s = {0, unknown_size}) : m_device(d), m_section(s)
+        sub_device(Device &d, long_offset_range s = {0, unknown_offset}) : m_device(d), m_section(s)
         {
             APE_Expects(m_section.begin <= m_section.end);
         }
 
         long_size_t offset(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             clear_error(ec);
             auto off = std::clamp(offset(m_device, ec), m_section.begin, m_section.end);
             return off - m_section.begin;;
@@ -209,12 +212,12 @@ namespace io
         }
 
         long_size_t seek(long_size_t offset, error_code_ptr ec = {})
-        {   
+        {
             seek(m_device, offset + m_section.begin, ec) - m_section.begin;
         }
 
         long_size_t size(error_code_ptr ec = {}) const noexcept
-        { 
+        {
             clear_error(ec);
             return size(m_section);
         }
@@ -228,9 +231,9 @@ namespace io
             return m_device;
         }
 
-        long_offset_range section() const noexcept 
+        long_offset_range section() const noexcept
         {
-            returm m_section;
+            return m_section;
         }
 
         mutable_buffer read(mutable_buffer buf, error_code_ptr ec = {})
@@ -247,7 +250,7 @@ namespace io
         }
 
         auto view_rd(long_offset_range h, error_code_ptr ec = {})
-        { 
+        {
             auto first = h.begin + m_section.begin;
             auto last = h.end + m_section.begin;
             return view_rd(m_device, {first, std::min(last, m_section.end)}, ec);
@@ -263,12 +266,12 @@ namespace io
 
             auto avaliable_size = m_section.end - off;
             auto buf_size = std::min(avaliable_size, buf.size());
-            auto res = write(m_device, buf.first(buf_size), ec);         
+            auto res = write(m_device, buf.first(buf_size), ec);
             return {res.begin(), buf.end()};
         }
 
         auto view_wr(long_offset_range h, error_code_ptr ec = {})
-        { 
+        {
             auto first = h.begin + m_section.begin;
             auto last = h.end + m_section.begin;
             return view_wr(m_device, {first, std::min(last, m_section.end)}, ec);
@@ -279,10 +282,12 @@ namespace io
             sync(m_device, err);
         }
 
-        long_size_t truncate(long_size_t size, error_code_ptr err = {})
+        long_size_t truncate(long_size_t size_, error_code_ptr err = {})
         {
-            if (size != size(m_section) )
-                set_error_or_throw<io_exception>(ec, std::errc::invalid_argument);
+            if (size_ != size(m_section)){
+                set_error_or_throw<io_exception>(err, std::errc::invalid_argument);
+                return {};
+            }
             clear_error(err);
             return size(m_section) ;
         }
@@ -295,17 +300,17 @@ namespace io
     };
 
     template<reader Device>
-    class reader_to_view 
+    class reader_to_view
     {
         Device &m_device;
         public:
         explicit reader_to_view(Device& d) noexcept : m_device(d){}
 
         cache_rd_view view_rd(long_offset_range rng, error_code_ptr err = {}){
-            if (!in_size_t_range(offset))
+            if (!in_size_t_range(size(rng)))
             {
-                set_error_or_throw<io_exception>(ec, std::errc::value_too_large);
-                return get_pos_part(rep);
+                set_error_or_throw<io_exception>(err, std::errc::value_too_large);
+                return {};
             }
 
             cache_rd_view res;
@@ -342,20 +347,20 @@ namespace io
     };
 
     template<writer Device>
-    class writer_to_view 
+    class writer_to_view
     {
         Device &m_device;
         public:
         explicit writer_to_view(Device& d) noexcept : m_device(d){}
 
         cache_rd_view view_wr(long_offset_range rng, error_code_ptr err = {}){
-            if (!in_size_t_range(offset))
+            if (!in_size_t_range(size(rng)))
             {
-                set_error_or_throw<io_exception>(ec, std::errc::value_too_large);
-                return get_pos_part(rep);
+                set_error_or_throw<io_exception>(err, std::errc::value_too_large);
+                return {};
             }
 
-            cache_wr_view res;
+            cache_wr_view res(m_device, {}, rng.begin);
             res.data.resize(size(rng));
             return res;
         }

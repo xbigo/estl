@@ -3,4 +3,5 @@
 #define APE_ESTL_IO_H
 #include <ape/estl/io/iocore.hpp>
 #include <ape/estl/io/memory.hpp>
+#include <ape/estl/io/adaptor.hpp>
 #endif // end  APE_ESTL_IO_H
