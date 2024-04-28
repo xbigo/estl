@@ -129,7 +129,7 @@ namespace io
 
         long_size_t seek(long_size_t offset, error_code_ptr ec = {})
         {
-            seek(m_device, offset + m_shift, ec) - m_shift;
+            return seek(m_device, offset + m_shift, ec) - m_shift;
         }
 
         long_size_t size(error_code_ptr ec = {}) const noexcept
@@ -213,7 +213,8 @@ namespace io
 
         long_size_t seek(long_size_t offset, error_code_ptr ec = {})
         {
-            seek(m_device, offset + m_section.begin, ec) - m_section.begin;
+            return seek(m_device, offset + m_section.begin, ec) -
+                   m_section.begin;
         }
 
         long_size_t size(error_code_ptr ec = {}) const noexcept

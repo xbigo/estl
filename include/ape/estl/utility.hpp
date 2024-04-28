@@ -8,6 +8,8 @@
 #include <cstdint>
 
 BEGIN_APE_NAMESPACE
+template <typename... Args> void unused(Args &&...) {}
+
 using long_size_t = std::uint64_t;
 using long_offset_t = std::int64_t;
 
@@ -118,9 +120,87 @@ inline constexpr decltype(auto) operator<=>(not_own<T> lhs, not_own<U> rhs) noex
     return lhs.get() <=> rhs.get();
 }
 
-template<typename ... Args>
-void unused(Args&&... ){}
+template <typename T> class own_ptr {
+    T *ptr{nullptr};
 
+  public:
+    template <typename U> friend class own_ptr;
+
+    ~own_ptr() { APE_Expects(!valid()); }
+
+    constexpr own_ptr() noexcept = default;
+
+    template <ptr_convertible_to<T> U>
+    explicit constexpr own_ptr(U *p) noexcept : ptr(p) {}
+
+    template <ptr_convertible_to<T> U>
+    constexpr own_ptr(own_ptr<U> &&p) noexcept {
+        std::swap(ptr, p.ptr);
+    }
+
+    template <ptr_convertible_to<T> U>
+    constexpr own_ptr &operator=(U *p) noexcept {
+        APE_Expects(!valid());
+        ptr = p;
+        return *this;
+    }
+
+    template <ptr_convertible_to<T> U>
+    constexpr own_ptr &operator=(own_ptr<U> &&p) noexcept {
+        APE_Expects(!valid());
+        if (this != &p) {
+          ptr = p.get();
+          p.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    explicit constexpr operator bool() const noexcept { return valid(); }
+
+    constexpr T *get() const noexcept { return ptr; }
+
+    template <ptr_convertible_from<T> U> constexpr U *get() const noexcept {
+        return get();
+    }
+
+    constexpr T *operator->() const noexcept {
+        APE_Expects(valid());
+        return get();
+    }
+
+    constexpr T &operator*() const noexcept {
+        APE_Expects(valid());
+        return *get();
+    }
+    template <ptr_convertible_from<T> U>
+    constexpr U &operator*() const noexcept {
+        APE_Expects(valid());
+        return *get();
+    }
+
+    constexpr bool valid() const noexcept { return ptr != nullptr; }
+
+    constexpr bool release() noexcept {
+        auto r = valid();
+        ptr = nullptr;
+        return r;
+    }
+};
+
+template <typename T> own_ptr(T *) -> own_ptr<T>;
+
+template <typename T, typename U>
+  requires std::common_with<T *, U *>
+inline constexpr bool operator==(own_ptr<T> lhs, own_ptr<U> rhs) noexcept {
+    return lhs.get() == rhs.get();
+}
+
+template <typename T, typename U>
+  requires std::common_with<T *, U *>
+inline constexpr decltype(auto) operator<=>(own_ptr<T> lhs,
+                                            own_ptr<U> rhs) noexcept {
+    return lhs.get() <=> rhs.get();
+}
 END_APE_NAMESPACE
 
 #endif //end  APE_ESTL_UTILITY_H
