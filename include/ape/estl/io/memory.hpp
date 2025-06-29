@@ -206,7 +206,7 @@ namespace io
         { // read_map
             APE_Expects(is_valid_range(h));
 
-            if (h.end != unknown_size && h.end > get_size(rep))
+            if (h.end != unknown_size && h.end > long_offset_t(get_size(rep)))
             {
                 set_error_or_throw<io_exception>(ec, std::errc::invalid_argument);
                 return buffer_rd_view();
@@ -215,7 +215,7 @@ namespace io
             clear_error(ec);
 
             if (h.end == unknown_size)
-                h.end = get_size(rep);
+                h.end = long_offset_t(get_size(rep));
             return buffer_rd_view({get_data_part(rep).begin() + narrow_cast(h.begin),
                                    get_data_part(rep).begin() + narrow_cast(h.end)});
         }
@@ -278,7 +278,7 @@ namespace io
             APE_Expects(is_valid_range(h));
 
             if (h.end == unknown_size)
-                h.end = get_size(rep);
+                h.end = long_offset_t(get_size(rep));
 
             if (!in_size_t_range(h.end))
             {
@@ -286,7 +286,7 @@ namespace io
                 return {};
             }
 
-            if (h.end > get_size(rep))
+            if (h.end > long_offset_t(get_size(rep)))
             {
                 do_truncate(rep, h.end, err);
                 if (has_error(err))

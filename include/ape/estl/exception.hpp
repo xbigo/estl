@@ -15,6 +15,7 @@ namespace detail
         using Base::Base;
         
         context_exception(context_exception&&) = default;
+        context_exception(const context_exception&) = default;
 
         /// just for nothow compatible
         virtual ~context_exception() {}
