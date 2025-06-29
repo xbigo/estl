@@ -75,8 +75,17 @@ public:
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using allocator_type = Allocator ;
 private:
-    constexpr iterator convert_from_large_(typename large_type::iterator ret) noexcept{
+    constexpr iterator iter_from_large_(typename large_type::iterator ret) noexcept{
         return m_large_buffer.data() + (ret - m_large_buffer.begin());
+    }
+    constexpr iterator iter_from_small_(typename small_type::iterator ret) noexcept{
+        return m_small_buffer.data() + (ret - m_small_buffer.begin());
+    }
+    constexpr typename large_type::const_iterator iter_to_large_(const_iterator itr) noexcept{
+        return m_large_buffer.begin() + (itr - cbegin());
+    }
+    constexpr typename small_type::const_iterator iter_to_small_(const_iterator itr) noexcept{
+        return m_small_buffer.begin() + (itr - cbegin());
     }
 public:
     constexpr sso_vector() noexcept(noexcept(allocator_type())){
@@ -340,30 +349,26 @@ public:
     }
 
     constexpr iterator insert( const_iterator pos_, size_type count, const T& value ){
-        auto idx = (pos_ - cbegin());
         if (is_small()){
             if (m_small_buffer.size() + count <= N)
-                return m_small_buffer.insert(pos_, count, value);
+                return iter_from_small_(m_small_buffer.insert(iter_to_small_(pos_), count, value));
             expand_to_large_storage_();
         }
-        auto pos = m_large_buffer.begin() + idx;
-        auto ret = m_large_buffer.insert(pos, count, value);
-        return convert_from_large_(ret);
+        auto ret = m_large_buffer.insert(iter_to_large_(pos_), count, value);
+        return iter_from_large_(ret);
     }
 
     template< std::forward_iterator ForwardItr>
         constexpr iterator insert( const_iterator pos_, ForwardItr first, ForwardItr last ){
         auto count = std::distance(first, last);
-        auto idx = (pos_ - cbegin());
         if (is_small())
         {
             if (m_small_buffer.size() + count <= N)
-                return m_small_buffer.insert(pos_, first, last);
+                return iter_from_small_(m_small_buffer.insert(iter_to_small_(pos_), first, last));
             expand_to_large_storage_();
         }
-        auto pos = m_large_buffer.begin() + idx;
-        auto ret = m_large_buffer.insert(pos, first, last);
-        return convert_from_large_(ret);
+        auto ret = m_large_buffer.insert(iter_to_large_(pos_), first, last);
+        return iter_from_large_(ret);
     }
 
     constexpr iterator insert( const_iterator pos, std::initializer_list<T> ilist ){
@@ -371,35 +376,30 @@ public:
     }
 
     template< typename... Args > constexpr iterator emplace(const_iterator pos_, Args&&... args ){
-        auto idx = (pos_ - cbegin());
         if (is_small())
         {
             if (m_small_buffer.size() < N)
-                return m_small_buffer.emplace(pos_, std::move(args)...);
+                return iter_from_small_(m_small_buffer.emplace(iter_to_small_(pos_), std::move(args)...));
             expand_to_large_storage_();
         }
-        auto pos = m_large_buffer.begin() + idx;
-        auto ret = m_large_buffer.emplace(pos, std::move(args)...);
-        return convert_from_large_(ret);
+        auto ret = m_large_buffer.emplace(iter_to_large_(pos_), std::move(args)...);
+        return iter_from_large_(ret);
     }
 
     constexpr iterator erase( const_iterator pos_ ) noexcept{
         if (is_small())
-            return m_small_buffer.erase(pos_);
+            return iter_from_small_(m_small_buffer.erase(iter_to_small_(pos_)));
 
-        auto pos = m_large_buffer.begin() + (pos_ - cbegin());
-        auto ret = m_large_buffer.erase(pos);
-        return convert_from_large_(ret);
+        auto ret = m_large_buffer.erase(iter_to_large_(pos_));
+        return iter_from_large_(ret);
     }
 
     constexpr iterator erase( const_iterator first, const_iterator last ) noexcept{
         if (is_small())
-            return m_small_buffer.erase(first, last);
+            return iter_from_small_(m_small_buffer.erase(iter_to_small_(first), iter_to_small_(last)));
 
-        auto from = m_large_buffer.begin() + (first - cbegin());
-        auto to = m_large_buffer.begin() + (last - cbegin());
-        auto ret = m_large_buffer.erase(from, to);
-        return convert_from_large_(ret);
+        auto ret = m_large_buffer.erase(iter_to_large_(first), iter_to_large_(first));
+        return iter_from_large_(ret);
     }
 
     template< typename... Args > constexpr reference emplace_back( Args&&... args ){

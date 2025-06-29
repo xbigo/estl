@@ -2,6 +2,8 @@
 #ifndef APE_ESTL_BASIC_REF_VECTOR_H
 #define APE_ESTL_BASIC_REF_VECTOR_H
 #include <concepts>
+#include <stdexcept>
+
 #include <algorithm> // for std::min/max
 #include <memory> // for std::addressof
 #include <array>
